@@ -1,0 +1,66 @@
+# Ansible
+*.retry
+.ansible/
+ansible.log
+ansible.log.*
+
+# Reports and outputs
+reports/
+ansible/reports/
+*.html
+*.json
+*.md
+!README.md
+!ARCHITECTURE.md
+!ANALISE_IMPACTO.md
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python (if any Python scripts are added)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Secrets and sensitive data
+*.key
+*.pem
+*.crt
+secrets/
+credentials/
+.env
+.env.local
+
+# Backup files
+*.bak
+*.backup
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
