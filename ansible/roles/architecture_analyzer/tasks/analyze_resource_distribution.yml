@@ -1,0 +1,116 @@
+---
+- name: Analyze resource distribution
+  block:
+    - name: Load namespaces data
+      include_vars:
+        file: "{{ data_output_path }}/raw_data/namespaces.json"
+        name: namespaces_data
+      when: data_collection_completed | bool
+
+    - name: Load pods data
+      include_vars:
+        file: "{{ data_output_path }}/raw_data/pods.json"
+        name: pods_data
+      when: data_collection_completed | bool
+
+    - name: Set default data if not available
+      set_fact:
+        namespaces_data:
+          namespaces_json: '{"items": []}'
+          resource_quotas: '{"items": []}'
+          limit_ranges: '{"items": []}'
+        pods_data:
+          pods_json: '{"items": []}'
+      when: not data_collection_completed | bool
+
+    - name: Parse data
+      set_fact:
+        namespaces_list: "{{ namespaces_data.namespaces_json | from_json }}"
+        resource_quotas_list: "{{ namespaces_data.resource_quotas | from_json }}"
+        limit_ranges_list: "{{ namespaces_data.limit_ranges | from_json }}"
+        pods_list: "{{ pods_data.pods_json | from_json }}"
+
+    - name: Analyze namespace distribution
+      set_fact:
+        namespace_distribution:
+          total_namespaces: "{{ namespaces_list.items | length }}"
+          system_namespaces: "{{ namespaces_list.items | selectattr('metadata.name', 'match', '^(kube-|openshift-|default)') | list | length }}"
+          user_namespaces: "{{ namespaces_list.items | rejectattr('metadata.name', 'match', '^(kube-|openshift-|default)') | list | length }}"
+          namespaces_with_quotas: "{{ resource_quotas_list.items | map(attribute='metadata.namespace') | unique | list | length }}"
+          namespaces_with_limits: "{{ limit_ranges_list.items | map(attribute='metadata.namespace') | unique | list | length }}"
+
+    - name: Analyze resource quotas
+      set_fact:
+        resource_quotas_analysis:
+          total_quotas: "{{ resource_quotas_list.items | length }}"
+          quotas_by_namespace: "{{ resource_quotas_list.items | groupby('metadata.namespace') | map('first') | list }}"
+          quota_types: "{{ resource_quotas_list.items | map(attribute='spec.scopes') | unique | list }}"
+
+    - name: Analyze limit ranges
+      set_fact:
+        limit_ranges_analysis:
+          total_limit_ranges: "{{ limit_ranges_list.items | length }}"
+          limit_ranges_by_namespace: "{{ limit_ranges_list.items | groupby('metadata.namespace') | map('first') | list }}"
+          limit_types: "{{ limit_ranges_list.items | map(attribute='spec.limits') | unique | list }}"
+
+    - name: Analyze pod distribution
+      set_fact:
+        pod_distribution:
+          total_pods: "{{ pods_list.items | length }}"
+          pods_by_namespace: "{{ pods_list.items | groupby('metadata.namespace') | map('first') | list }}"
+          running_pods: "{{ pods_list.items | selectattr('status.phase', 'equalto', 'Running') | list | length }}"
+          pending_pods: "{{ pods_list.items | selectattr('status.phase', 'equalto', 'Pending') | list | length }}"
+          failed_pods: "{{ pods_list.items | selectattr('status.phase', 'equalto', 'Failed') | list | length }}"
+
+    - name: Check resource distribution issues
+      set_fact:
+        resource_distribution_issues: []
+      block:
+        - name: Check for namespaces without resource quotas
+          set_fact:
+            resource_distribution_issues: "{{ resource_distribution_issues + ['Some namespaces may not have resource quotas configured'] }}"
+          when: namespace_distribution.namespaces_with_quotas < (namespace_distribution.total_namespaces * 0.5)
+
+        - name: Check for namespaces without limit ranges
+          set_fact:
+            resource_distribution_issues: "{{ resource_distribution_issues + ['Some namespaces may not have limit ranges configured'] }}"
+          when: namespace_distribution.namespaces_with_limits < (namespace_distribution.total_namespaces * 0.5)
+
+        - name: Check for failed pods
+          set_fact:
+            resource_distribution_issues: "{{ resource_distribution_issues + ['Some pods are in failed state'] }}"
+          when: pod_distribution.failed_pods > 0
+
+        - name: Check for pending pods
+          set_fact:
+            resource_distribution_issues: "{{ resource_distribution_issues + ['Some pods are in pending state'] }}"
+          when: pod_distribution.pending_pods > 5
+
+    - name: Update architecture analysis with resource distribution
+      set_fact:
+        architecture_analysis:
+          resource_distribution:
+            namespace_distribution: "{{ namespace_distribution }}"
+            resource_quotas: "{{ resource_quotas_analysis }}"
+            limit_ranges: "{{ limit_ranges_analysis }}"
+            pod_distribution: "{{ pod_distribution }}"
+            issues: "{{ resource_distribution_issues }}"
+
+    - name: Set fact for resource distribution analysis status
+      set_fact:
+        analysis_status:
+          resource_distribution: true
+
+    - name: Display resource distribution analysis status
+      debug:
+        msg: "Resource distribution analysis completed successfully"
+
+  rescue:
+    - name: Handle resource distribution analysis failure
+      debug:
+        msg: "Failed to analyze resource distribution: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for resource distribution analysis status
+      set_fact:
+        analysis_status:
+          resource_distribution: false

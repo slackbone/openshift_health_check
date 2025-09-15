@@ -1,0 +1,87 @@
+---
+- name: Analyze operator health
+  block:
+    - name: Load operators data
+      include_vars:
+        file: "{{ data_output_path }}/raw_data/operators.json"
+        name: operators_data
+      when: data_collection_completed | bool
+
+    - name: Set default operators data if not available
+      set_fact:
+        operators_data:
+          clusterserviceversions_json: '{"items": []}'
+          subscriptions_json: '{"items": []}'
+          installplans_json: '{"items": []}'
+          operatorgroups_json: '{"items": []}'
+      when: not data_collection_completed | bool
+
+    - name: Parse operators data
+      set_fact:
+        csv_list: "{{ operators_data.clusterserviceversions_json | from_json }}"
+        subscriptions_list: "{{ operators_data.subscriptions_json | from_json }}"
+        installplans_list: "{{ operators_data.installplans_json | from_json }}"
+        operatorgroups_list: "{{ operators_data.operatorgroups_json | from_json }}"
+
+    - name: Analyze operator health
+      set_fact:
+        operator_health_analysis:
+          total_csvs: "{{ csv_list.items | length }}"
+          total_subscriptions: "{{ subscriptions_list.items | length }}"
+          total_install_plans: "{{ installplans_list.items | length }}"
+          total_operator_groups: "{{ operatorgroups_list.items | length }}"
+          csvs_by_namespace: "{{ csv_list.items | groupby('metadata.namespace') | map('first') | list }}"
+          subscriptions_by_namespace: "{{ subscriptions_list.items | groupby('metadata.namespace') | map('first') | list }}"
+
+    - name: Analyze operator versions
+      set_fact:
+        operator_versions_analysis:
+          csv_versions: "{{ csv_list.items | map(attribute='spec.version') | unique | list }}"
+          subscription_versions: "{{ subscriptions_list.items | map(attribute='spec.channel') | unique | list }}"
+          operator_names: "{{ csv_list.items | map(attribute='spec.displayName') | unique | list }}"
+
+    - name: Check operator issues
+      set_fact:
+        operator_issues: []
+      block:
+        - name: Check for failed install plans
+          set_fact:
+            operator_issues: "{{ operator_issues + ['Some install plans may have failed'] }}"
+          when: installplans_list.items | selectattr('status.phase', 'equalto', 'Failed') | list | length > 0
+
+        - name: Check for subscription issues
+          set_fact:
+            operator_issues: "{{ operator_issues + ['Some subscriptions may have issues'] }}"
+          when: subscriptions_list.items | selectattr('status.conditions', 'defined') | selectattr('status.conditions', 'selectattr', 'status', 'equalto', 'False') | list | length > 0
+
+        - name: Check for CSV issues
+          set_fact:
+            operator_issues: "{{ operator_issues + ['Some cluster service versions may have issues'] }}"
+          when: csv_list.items | selectattr('status.phase', 'defined') | selectattr('status.phase', 'not', 'equalto', 'Succeeded') | list | length > 0
+
+    - name: Update architecture analysis with operator analysis
+      set_fact:
+        architecture_analysis:
+          operator_analysis:
+            operator_health: "{{ operator_health_analysis }}"
+            operator_versions: "{{ operator_versions_analysis }}"
+            operator_issues: "{{ operator_issues }}"
+
+    - name: Set fact for operator analysis status
+      set_fact:
+        analysis_status:
+          operator_analysis: true
+
+    - name: Display operator analysis status
+      debug:
+        msg: "Operator health analysis completed successfully"
+
+  rescue:
+    - name: Handle operator analysis failure
+      debug:
+        msg: "Failed to analyze operator health: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for operator analysis status
+      set_fact:
+        analysis_status:
+          operator_analysis: false

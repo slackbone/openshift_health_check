@@ -1,0 +1,97 @@
+---
+- name: Analyze cluster overview
+  block:
+    - name: Load cluster info data
+      include_vars:
+        file: "{{ data_output_path }}/raw_data/cluster_info.json"
+        name: cluster_data
+      when: data_collection_completed | bool
+
+    - name: Set default cluster data if not available
+      set_fact:
+        cluster_data:
+          cluster_info: "No cluster info available"
+          cluster_version: {}
+          nodes_overview: "No nodes overview available"
+          namespaces_overview: "No namespaces overview available"
+      when: not data_collection_completed | bool
+
+    - name: Parse cluster version
+      set_fact:
+        cluster_version: "{{ cluster_data.cluster_version.items[0].status.desired.version | default('Unknown') }}"
+      when: cluster_data.cluster_version.items is defined
+
+    - name: Set default cluster version
+      set_fact:
+        cluster_version: "Unknown"
+      when: cluster_data.cluster_version.items is not defined
+
+    - name: Count nodes from overview
+      set_fact:
+        total_nodes: "{{ cluster_data.nodes_overview.split('\n') | length - 1 }}"
+      when: cluster_data.nodes_overview != "No nodes overview available"
+
+    - name: Set default node count
+      set_fact:
+        total_nodes: 0
+      when: cluster_data.nodes_overview == "No nodes overview available"
+
+    - name: Count namespaces from overview
+      set_fact:
+        total_namespaces: "{{ cluster_data.namespaces_overview.split('\n') | length - 1 }}"
+      when: cluster_data.namespaces_overview != "No namespaces overview available"
+
+    - name: Set default namespace count
+      set_fact:
+        total_namespaces: 0
+      when: cluster_data.namespaces_overview == "No namespaces overview available"
+
+    - name: Analyze cluster health
+      set_fact:
+        cluster_health_issues: []
+      block:
+        - name: Check minimum master nodes
+          set_fact:
+            cluster_health_issues: "{{ cluster_health_issues + ['Insufficient master nodes: ' + (total_nodes | string) + ' (minimum: ' + (min_master_nodes | string) + ')'] }}"
+          when: total_nodes < min_master_nodes
+
+        - name: Check minimum worker nodes
+          set_fact:
+            cluster_health_issues: "{{ cluster_health_issues + ['Insufficient worker nodes: ' + (total_nodes | string) + ' (minimum: ' + (min_worker_nodes | string) + ')'] }}"
+          when: total_nodes < min_worker_nodes
+
+    - name: Determine cluster health status
+      set_fact:
+        cluster_health: "{{ 'healthy' if cluster_health_issues | length == 0 else 'issues_detected' }}"
+
+    - name: Update architecture analysis with cluster overview
+      set_fact:
+        architecture_analysis:
+          cluster_overview:
+            cluster_version: "{{ cluster_version }}"
+            total_nodes: "{{ total_nodes }}"
+            master_nodes: "{{ total_nodes }}"
+            worker_nodes: "{{ total_nodes }}"
+            infrastructure_nodes: 0
+            cluster_health: "{{ cluster_health }}"
+            issues: "{{ cluster_health_issues }}"
+            total_namespaces: "{{ total_namespaces }}"
+
+    - name: Set fact for cluster overview analysis status
+      set_fact:
+        analysis_status:
+          cluster_overview: true
+
+    - name: Display cluster overview analysis status
+      debug:
+        msg: "Cluster overview analysis completed successfully"
+
+  rescue:
+    - name: Handle cluster overview analysis failure
+      debug:
+        msg: "Failed to analyze cluster overview: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for cluster overview analysis status
+      set_fact:
+        analysis_status:
+          cluster_overview: false

@@ -1,0 +1,63 @@
+# OpenShift Health Check - Data Collection Report
+
+## Collection Summary
+
+**Collection Timestamp:** {{ consolidated_data.collection_summary.timestamp }}  
+**Cluster URL:** {{ consolidated_data.collection_summary.cluster_url }}  
+**CLI Command:** {{ consolidated_data.collection_summary.cli_command }}  
+**Collection Host:** {{ consolidated_data.collection_summary.collection_host }}  
+**Ansible Version:** {{ consolidated_data.collection_summary.ansible_version }}  
+
+## Collection Status
+
+| Component | Status | File |
+|-----------|--------|------|
+| Cluster Info | {{ '✓ Success' if consolidated_data.data_files.cluster_info else '✗ Failed' }} | {{ consolidated_data.data_files.cluster_info or 'N/A' }} |
+| Nodes | {{ '✓ Success' if consolidated_data.data_files.nodes else '✗ Failed' }} | {{ consolidated_data.data_files.nodes or 'N/A' }} |
+| Namespaces | {{ '✓ Success' if consolidated_data.data_files.namespaces else '✗ Failed' }} | {{ consolidated_data.data_files.namespaces or 'N/A' }} |
+| Pods | {{ '✓ Success' if consolidated_data.data_files.pods else '✗ Failed' }} | {{ consolidated_data.data_files.pods or 'N/A' }} |
+| Services | {{ '✓ Success' if consolidated_data.data_files.services else '✗ Failed' }} | {{ consolidated_data.data_files.services or 'N/A' }} |
+| Deployments | {{ '✓ Success' if consolidated_data.data_files.deployments else '✗ Failed' }} | {{ consolidated_data.data_files.deployments or 'N/A' }} |
+| RBAC | {{ '✓ Success' if consolidated_data.data_files.rbac else '✗ Failed' }} | {{ consolidated_data.data_files.rbac or 'N/A' }} |
+| Security Configs | {{ '✓ Success' if consolidated_data.data_files.security_configs else '✗ Failed' }} | {{ consolidated_data.data_files.security_configs or 'N/A' }} |
+| Operators | {{ '✓ Success' if consolidated_data.data_files.operators else '✗ Failed' }} | {{ consolidated_data.data_files.operators or 'N/A' }} |
+| Metrics | {{ '✓ Success' if consolidated_data.data_files.metrics else '✗ Failed' }} | {{ consolidated_data.data_files.metrics or 'N/A' }} |
+| Events | {{ '✓ Success' if consolidated_data.data_files.events else '✗ Failed' }} | {{ consolidated_data.data_files.events or 'N/A' }} |
+
+## Collection Statistics
+
+{% set success_count = 0 %}
+{% set total_count = 0 %}
+{% for key, value in consolidated_data.data_files.items() %}
+{% set total_count = total_count + 1 %}
+{% if value %}
+{% set success_count = success_count + 1 %}
+{% endif %}
+{% endfor %}
+
+**Total Components:** {{ total_count }}  
+**Successful Collections:** {{ success_count }}  
+**Failed Collections:** {{ total_count - success_count }}  
+**Success Rate:** {{ ((success_count / total_count) * 100) | round(2) }}%  
+
+## Data Files Location
+
+All collected data files are stored in: `{{ data_output_dir }}`
+
+## Next Steps
+
+The collected data will be processed by the analysis roles:
+- Architecture Analyzer
+- Security Analyzer  
+- Best Practices Analyzer
+- Resource Optimizer
+
+## Notes
+
+{% if success_count < total_count %}
+⚠️ **Warning:** Some data collection tasks failed. The analysis may be incomplete.
+{% else %}
+✅ **Success:** All data collection tasks completed successfully.
+{% endif %}
+
+This report was generated automatically by the OpenShift Health Check Ansible playbook.

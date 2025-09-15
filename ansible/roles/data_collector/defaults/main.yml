@@ -1,0 +1,40 @@
+---
+# Data Collector Role Default Variables
+
+# OpenShift/Kubernetes connection settings
+openshift_cluster_url: ""
+openshift_token: ""
+openshift_kubeconfig: "~/.kube/config"
+openshift_context: ""
+
+# Data collection settings
+collect_cluster_info: true
+collect_nodes: true
+collect_namespaces: true
+collect_pods: true
+collect_services: true
+collect_deployments: true
+collect_rbac: true
+collect_security_configs: true
+collect_operators: true
+collect_metrics: true
+collect_events: true
+
+# Collection filters
+namespace_filter: ""
+label_selector: ""
+field_selector: ""
+
+# Output settings
+data_output_dir: "{{ report_output_path }}/raw_data"
+data_format: "json"
+compress_data: false
+
+# Timeout settings
+command_timeout: 300
+connection_timeout: 30
+
+# Resource limits for data collection
+max_pods_per_namespace: 1000
+max_events_per_namespace: 1000
+max_metrics_points: 10000

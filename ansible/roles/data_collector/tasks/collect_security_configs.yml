@@ -1,0 +1,100 @@
+---
+- name: Collect security configurations
+  block:
+    - name: Get security context constraints (OpenShift specific)
+      command: "{{ cli_command }} get securitycontextconstraints -o json"
+      register: scc_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get network policies
+      command: "{{ cli_command }} get networkpolicies --all-namespaces -o json"
+      register: networkpolicies_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get pod security policies
+      command: "{{ cli_command }} get podsecuritypolicies --all-namespaces -o json"
+      register: psp_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get secrets (basic info only)
+      command: "{{ cli_command }} get secrets --all-namespaces -o json"
+      register: secrets_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get config maps
+      command: "{{ cli_command }} get configmaps --all-namespaces -o json"
+      register: configmaps_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Save security configs data to file
+      copy:
+        content: |
+          {
+            "securitycontextconstraints": {{ scc_json_result.stdout | default('{}') }},
+            "networkpolicies_json": {{ networkpolicies_json_result.stdout | default('{}') }},
+            "podsecuritypolicies_json": {{ psp_json_result.stdout | default('{}') }},
+            "secrets_json": {{ secrets_json_result.stdout | default('{}') }},
+            "configmaps_json": {{ configmaps_json_result.stdout | default('{}') }},
+            "collection_metadata": {{ collection_metadata | to_nice_json }}
+          }
+        dest: "{{ data_output_dir }}/security_configs.json"
+        mode: '0644'
+
+    - name: Set fact for security configs collection status
+      set_fact:
+        collection_status:
+          security_configs: true
+
+    - name: Display security configs collection status
+      debug:
+        msg: "Security configurations collected successfully"
+
+  rescue:
+    - name: Handle security configs collection failure
+      debug:
+        msg: "Failed to collect security configurations: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for security configs collection status
+      set_fact:
+        collection_status:
+          security_configs: false

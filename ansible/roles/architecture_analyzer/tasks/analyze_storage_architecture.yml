@@ -1,0 +1,88 @@
+---
+- name: Analyze storage architecture
+  block:
+    - name: Set default storage analysis
+      set_fact:
+        storage_analysis:
+          persistent_volumes:
+            total_pvs: 0
+            bound_pvs: 0
+            available_pvs: 0
+            pvs_by_storage_class: {}
+          storage_classes:
+            total_storage_classes: 0
+            default_storage_class: ""
+            storage_classes_list: []
+          volume_snapshots:
+            total_snapshots: 0
+            snapshots_by_namespace: {}
+          storage_utilization:
+            total_capacity: "0"
+            used_capacity: "0"
+            available_capacity: "0"
+          issues: []
+
+    - name: Load namespaces data for storage analysis
+      include_vars:
+        file: "{{ data_output_path }}/raw_data/namespaces.json"
+        name: namespaces_data
+      when: data_collection_completed | bool
+
+    - name: Analyze storage from namespaces data
+      set_fact:
+        storage_analysis:
+          persistent_volumes:
+            total_pvs: 0
+            bound_pvs: 0
+            available_pvs: 0
+            pvs_by_storage_class: {}
+          storage_classes:
+            total_storage_classes: 0
+            default_storage_class: "Unknown"
+            storage_classes_list: []
+          volume_snapshots:
+            total_snapshots: 0
+            snapshots_by_namespace: {}
+          storage_utilization:
+            total_capacity: "Unknown"
+            used_capacity: "Unknown"
+            available_capacity: "Unknown"
+          issues: ["Storage analysis limited - detailed storage data not collected"]
+
+    - name: Check storage architecture issues
+      set_fact:
+        storage_issues: []
+      block:
+        - name: Check for storage class configuration
+          set_fact:
+            storage_issues: "{{ storage_issues + ['No default storage class detected'] }}"
+          when: storage_analysis.storage_classes.default_storage_class == "Unknown"
+
+        - name: Check for persistent volume availability
+          set_fact:
+            storage_issues: "{{ storage_issues + ['Limited persistent volume information available'] }}"
+          when: storage_analysis.persistent_volumes.total_pvs == 0
+
+    - name: Update storage analysis with issues
+      set_fact:
+        architecture_analysis:
+          storage_analysis: "{{ storage_analysis | combine({'issues': storage_issues}) }}"
+
+    - name: Set fact for storage analysis status
+      set_fact:
+        analysis_status:
+          storage_analysis: true
+
+    - name: Display storage analysis status
+      debug:
+        msg: "Storage architecture analysis completed successfully"
+
+  rescue:
+    - name: Handle storage analysis failure
+      debug:
+        msg: "Failed to analyze storage architecture: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for storage analysis status
+      set_fact:
+        analysis_status:
+          storage_analysis: false

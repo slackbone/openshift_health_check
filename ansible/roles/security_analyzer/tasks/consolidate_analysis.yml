@@ -1,0 +1,74 @@
+---
+- name: Consolidate security analysis
+  block:
+    - name: Create security analysis output directory
+      file:
+        path: "{{ security_output_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Calculate overall security score
+      set_fact:
+        security_score: 100
+      block:
+        - name: Deduct points for RBAC issues
+          set_fact:
+            security_score: "{{ security_score - (security_analysis.rbac_analysis.issues | length * 10) }}"
+          when: security_analysis_status.rbac_analysis | bool
+
+        - name: Deduct points for pod security issues
+          set_fact:
+            security_score: "{{ security_score - (security_analysis.pod_security.pod_security_issues | length * 15) }}"
+          when: security_analysis_status.pod_security | bool
+
+        - name: Ensure score doesn't go below 0
+          set_fact:
+            security_score: "{{ [security_score, 0] | max }}"
+
+    - name: Update security analysis with overall score
+      set_fact:
+        security_analysis:
+          overall_security_score: "{{ security_score }}"
+          analysis_timestamp: "{{ ansible_date_time.iso8601 }}"
+          cluster_url: "{{ openshift_cluster_url }}"
+
+    - name: Save security analysis results
+      copy:
+        content: "{{ security_analysis | to_nice_json }}"
+        dest: "{{ security_output_dir }}/security_analysis.json"
+        mode: '0644'
+
+    - name: Create security analysis report
+      template:
+        src: security_analysis_report.j2
+        dest: "{{ security_output_dir }}/security_analysis_report.md"
+        mode: '0644'
+
+    - name: Set fact for security analysis completion
+      set_fact:
+        security_analysis_completed: true
+        security_analysis_path: "{{ security_output_dir }}"
+
+    - name: Display security analysis summary
+      debug:
+        msg: |
+          Security analysis completed!
+          
+          Analysis Status:
+          - RBAC Analysis: {{ '✓' if security_analysis_status.rbac_analysis else '✗' }}
+          - Network Security: {{ '✓' if security_analysis_status.network_security else '✗' }}
+          - Pod Security: {{ '✓' if security_analysis_status.pod_security else '✗' }}
+          - Secrets Management: {{ '✓' if security_analysis_status.secrets_management else '✗' }}
+          - Compliance Analysis: {{ '✓' if security_analysis_status.compliance_analysis else '✗' }}
+          
+          Overall Security Score: {{ security_score }}/100
+          Analysis saved to: {{ security_output_dir }}
+
+  rescue:
+    - name: Handle security analysis consolidation failure
+      debug:
+        msg: "Failed to consolidate security analysis: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for security analysis completion
+      set_fact:
+        security_analysis_completed: false

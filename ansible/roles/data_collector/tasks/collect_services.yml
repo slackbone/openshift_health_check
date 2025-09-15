@@ -1,0 +1,85 @@
+---
+- name: Collect services information
+  block:
+    - name: Get services detailed information
+      command: "{{ cli_command }} get services --all-namespaces -o json"
+      register: services_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+
+    - name: Get routes (OpenShift specific)
+      command: "{{ cli_command }} get routes --all-namespaces -o json"
+      register: routes_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get ingresses
+      command: "{{ cli_command }} get ingresses --all-namespaces -o json"
+      register: ingresses_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get endpoints
+      command: "{{ cli_command }} get endpoints --all-namespaces -o json"
+      register: endpoints_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Save services data to file
+      copy:
+        content: |
+          {
+            "services_json": {{ services_json_result.stdout }},
+            "routes_json": {{ routes_json_result.stdout | default('{}') }},
+            "ingresses_json": {{ ingresses_json_result.stdout | default('{}') }},
+            "endpoints_json": {{ endpoints_json_result.stdout | default('{}') }},
+            "collection_metadata": {{ collection_metadata | to_nice_json }}
+          }
+        dest: "{{ data_output_dir }}/services.json"
+        mode: '0644'
+
+    - name: Set fact for services collection status
+      set_fact:
+        collection_status:
+          services: true
+
+    - name: Display services collection status
+      debug:
+        msg: "Services information collected successfully"
+
+  rescue:
+    - name: Handle services collection failure
+      debug:
+        msg: "Failed to collect services information: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for services collection status
+      set_fact:
+        collection_status:
+          services: false

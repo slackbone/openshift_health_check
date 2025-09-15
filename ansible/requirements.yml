@@ -1,0 +1,19 @@
+---
+# Ansible Requirements for OpenShift Health Check
+# This file defines the Ansible collections and roles required
+
+# Collections
+collections:
+  - name: kubernetes.core
+    version: ">=2.0.0"
+  - name: community.general
+    version: ">=3.0.0"
+  - name: ansible.posix
+    version: ">=1.0.0"
+
+# Roles (if using external roles)
+# roles:
+#   - name: geerlingguy.pip
+#     version: "2.0.0"
+#   - name: geerlingguy.docker
+#     version: "4.0.0"

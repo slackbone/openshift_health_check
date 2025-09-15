@@ -1,0 +1,34 @@
+---
+- name: Include cluster overview analysis tasks
+  include_tasks: analyze_cluster_overview.yml
+  when: analyze_cluster_overview | bool
+  tags: ['architecture', 'cluster_overview']
+
+- name: Include node architecture analysis tasks
+  include_tasks: analyze_node_architecture.yml
+  when: analyze_node_architecture | bool
+  tags: ['architecture', 'node_analysis']
+
+- name: Include network architecture analysis tasks
+  include_tasks: analyze_network_architecture.yml
+  when: analyze_network_architecture | bool
+  tags: ['architecture', 'network_analysis']
+
+- name: Include storage architecture analysis tasks
+  include_tasks: analyze_storage_architecture.yml
+  when: analyze_storage_architecture | bool
+  tags: ['architecture', 'storage_analysis']
+
+- name: Include operator health analysis tasks
+  include_tasks: analyze_operator_health.yml
+  when: analyze_operator_health | bool
+  tags: ['architecture', 'operator_analysis']
+
+- name: Include resource distribution analysis tasks
+  include_tasks: analyze_resource_distribution.yml
+  when: analyze_resource_distribution | bool
+  tags: ['architecture', 'resource_distribution']
+
+- name: Consolidate architecture analysis
+  include_tasks: consolidate_analysis.yml
+  tags: ['architecture', 'consolidation']

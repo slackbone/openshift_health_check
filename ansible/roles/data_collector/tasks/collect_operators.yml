@@ -1,0 +1,100 @@
+---
+- name: Collect operators information
+  block:
+    - name: Get cluster service versions (OpenShift specific)
+      command: "{{ cli_command }} get clusterserviceversions --all-namespaces -o json"
+      register: csv_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get subscriptions (OpenShift specific)
+      command: "{{ cli_command }} get subscriptions --all-namespaces -o json"
+      register: subscriptions_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get install plans (OpenShift specific)
+      command: "{{ cli_command }} get installplans --all-namespaces -o json"
+      register: installplans_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get operator groups (OpenShift specific)
+      command: "{{ cli_command }} get operatorgroups --all-namespaces -o json"
+      register: operatorgroups_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get catalogs (OpenShift specific)
+      command: "{{ cli_command }} get catalogs --all-namespaces -o json"
+      register: catalogs_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Save operators data to file
+      copy:
+        content: |
+          {
+            "clusterserviceversions_json": {{ csv_json_result.stdout | default('{}') }},
+            "subscriptions_json": {{ subscriptions_json_result.stdout | default('{}') }},
+            "installplans_json": {{ installplans_json_result.stdout | default('{}') }},
+            "operatorgroups_json": {{ operatorgroups_json_result.stdout | default('{}') }},
+            "catalogs_json": {{ catalogs_json_result.stdout | default('{}') }},
+            "collection_metadata": {{ collection_metadata | to_nice_json }}
+          }
+        dest: "{{ data_output_dir }}/operators.json"
+        mode: '0644'
+
+    - name: Set fact for operators collection status
+      set_fact:
+        collection_status:
+          operators: true
+
+    - name: Display operators collection status
+      debug:
+        msg: "Operators information collected successfully"
+
+  rescue:
+    - name: Handle operators collection failure
+      debug:
+        msg: "Failed to collect operators information: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for operators collection status
+      set_fact:
+        collection_status:
+          operators: false

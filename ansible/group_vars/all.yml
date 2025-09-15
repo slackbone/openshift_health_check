@@ -1,0 +1,64 @@
+---
+# Variáveis globais para Avaliação de Saúde do OpenShift
+# Otimizadas para execução em RHCOS (Red Hat CoreOS)
+
+# Configurações de conexão OpenShift/Kubernetes
+# Podem ser sobrescritas em host_vars ou via linha de comando
+openshift_cluster_url: ""
+openshift_token: ""
+openshift_kubeconfig: "~/.kube/config"
+openshift_context: ""
+
+# Configurações de coleta de dados
+collect_cluster_info: true
+collect_nodes: true
+collect_namespaces: true
+collect_pods: true
+collect_services: true
+collect_deployments: true
+collect_rbac: true
+collect_security_configs: true
+collect_operators: true
+collect_metrics: true
+collect_events: true
+
+# Analysis settings
+analyze_cluster_overview: true
+analyze_node_architecture: true
+analyze_network_architecture: true
+analyze_storage_architecture: true
+analyze_operator_health: true
+analyze_resource_distribution: true
+
+analyze_rbac: true
+analyze_network_security: true
+analyze_pod_security: true
+analyze_secrets_management: true
+analyze_compliance: true
+
+# Output settings
+output_dir: "{{ playbook_dir }}/../reports"
+timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
+compress_reports: false
+
+# Security thresholds
+max_privileged_containers: 0
+max_root_containers: 0
+max_host_network_pods: 0
+max_host_pid_pods: 0
+max_host_ipc_pods: 0
+
+# Architecture thresholds
+min_master_nodes: 3
+min_worker_nodes: 2
+max_node_cpu_usage: 80
+max_node_memory_usage: 80
+max_pod_density_per_node: 100
+
+# Timeout settings
+command_timeout: 300
+connection_timeout: 30
+
+# Logging settings
+log_level: "INFO"
+log_format: "json"

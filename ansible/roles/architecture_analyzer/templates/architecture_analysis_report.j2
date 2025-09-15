@@ -1,0 +1,201 @@
+# OpenShift Health Check - Architecture Analysis Report
+
+## Analysis Summary
+
+**Analysis Timestamp:** {{ ansible_date_time.iso8601 }}  
+**Cluster URL:** {{ openshift_cluster_url }}  
+**Analysis Host:** {{ inventory_hostname }}  
+
+## Analysis Status
+
+| Component | Status |
+|-----------|--------|
+| Cluster Overview | {{ '✓ Success' if analysis_status.cluster_overview else '✗ Failed' }} |
+| Node Analysis | {{ '✓ Success' if analysis_status.node_analysis else '✗ Failed' }} |
+| Network Analysis | {{ '✓ Success' if analysis_status.network_analysis else '✗ Failed' }} |
+| Storage Analysis | {{ '✓ Success' if analysis_status.storage_analysis else '✗ Failed' }} |
+| Operator Analysis | {{ '✓ Success' if analysis_status.operator_analysis else '✗ Failed' }} |
+| Resource Distribution | {{ '✓ Success' if analysis_status.resource_distribution else '✗ Failed' }} |
+
+## Cluster Overview
+
+{% if analysis_status.cluster_overview %}
+- **Cluster Version:** {{ architecture_analysis.cluster_overview.cluster_version }}
+- **Total Nodes:** {{ architecture_analysis.cluster_overview.total_nodes }}
+- **Master Nodes:** {{ architecture_analysis.cluster_overview.master_nodes }}
+- **Worker Nodes:** {{ architecture_analysis.cluster_overview.worker_nodes }}
+- **Infrastructure Nodes:** {{ architecture_analysis.cluster_overview.infrastructure_nodes }}
+- **Total Namespaces:** {{ architecture_analysis.cluster_overview.total_namespaces }}
+- **Cluster Health:** {{ architecture_analysis.cluster_overview.cluster_health }}
+
+{% if architecture_analysis.cluster_overview.issues | length > 0 %}
+### Cluster Issues
+{% for issue in architecture_analysis.cluster_overview.issues %}
+- ⚠️ {{ issue }}
+{% endfor %}
+{% endif %}
+{% else %}
+❌ Cluster overview analysis failed
+{% endif %}
+
+## Node Architecture
+
+{% if analysis_status.node_analysis %}
+- **Total Nodes:** {{ architecture_analysis.node_analysis.node_distribution.total_nodes }}
+- **Master Nodes:** {{ architecture_analysis.node_analysis.node_distribution.master_nodes }}
+- **Worker Nodes:** {{ architecture_analysis.node_analysis.node_distribution.worker_nodes }}
+- **Infrastructure Nodes:** {{ architecture_analysis.node_analysis.node_distribution.infrastructure_nodes }}
+
+### Resource Utilization
+- **Total CPU Cores:** {{ architecture_analysis.node_analysis.resource_utilization.total_cpu_cores }}
+- **Total Memory:** {{ architecture_analysis.node_analysis.resource_utilization.total_memory }}
+- **Allocatable CPU:** {{ architecture_analysis.node_analysis.resource_utilization.allocatable_cpu }}
+- **Allocatable Memory:** {{ architecture_analysis.node_analysis.resource_utilization.allocatable_memory }}
+
+{% if architecture_analysis.node_analysis.issues | length > 0 %}
+### Node Issues
+{% for issue in architecture_analysis.node_analysis.issues %}
+- ⚠️ {{ issue }}
+{% endfor %}
+{% endif %}
+{% else %}
+❌ Node architecture analysis failed
+{% endif %}
+
+## Network Architecture
+
+{% if analysis_status.network_analysis %}
+- **Network Policies:** {{ architecture_analysis.network_analysis.network_policies.total_policies }}
+- **Namespaces with Policies:** {{ architecture_analysis.network_analysis.network_policies.namespaces_with_policies }}
+- **Total Routes:** {{ architecture_analysis.network_analysis.ingress_controllers.total_routes }}
+- **Total Ingresses:** {{ architecture_analysis.network_analysis.ingress_controllers.total_ingresses }}
+- **LoadBalancer Services:** {{ architecture_analysis.network_analysis.load_balancers.services_with_load_balancer }}
+- **NodePort Services:** {{ architecture_analysis.network_analysis.load_balancers.services_with_node_port }}
+
+{% if architecture_analysis.network_analysis.issues | length > 0 %}
+### Network Issues
+{% for issue in architecture_analysis.network_analysis.issues %}
+- ⚠️ {{ issue }}
+{% endfor %}
+{% endif %}
+{% else %}
+❌ Network architecture analysis failed
+{% endif %}
+
+## Storage Architecture
+
+{% if analysis_status.storage_analysis %}
+- **Persistent Volumes:** {{ architecture_analysis.storage_analysis.persistent_volumes.total_pvs }}
+- **Bound PVs:** {{ architecture_analysis.storage_analysis.persistent_volumes.bound_pvs }}
+- **Available PVs:** {{ architecture_analysis.storage_analysis.persistent_volumes.available_pvs }}
+- **Storage Classes:** {{ architecture_analysis.storage_analysis.storage_classes.total_storage_classes }}
+- **Default Storage Class:** {{ architecture_analysis.storage_analysis.storage_classes.default_storage_class }}
+
+{% if architecture_analysis.storage_analysis.issues | length > 0 %}
+### Storage Issues
+{% for issue in architecture_analysis.storage_analysis.issues %}
+- ⚠️ {{ issue }}
+{% endfor %}
+{% endif %}
+{% else %}
+❌ Storage architecture analysis failed
+{% endif %}
+
+## Operator Health
+
+{% if analysis_status.operator_analysis %}
+- **Cluster Service Versions:** {{ architecture_analysis.operator_analysis.operator_health.total_csvs }}
+- **Subscriptions:** {{ architecture_analysis.operator_analysis.operator_health.total_subscriptions }}
+- **Install Plans:** {{ architecture_analysis.operator_analysis.operator_health.total_install_plans }}
+- **Operator Groups:** {{ architecture_analysis.operator_analysis.operator_health.total_operator_groups }}
+
+{% if architecture_analysis.operator_analysis.operator_issues | length > 0 %}
+### Operator Issues
+{% for issue in architecture_analysis.operator_analysis.operator_issues %}
+- ⚠️ {{ issue }}
+{% endfor %}
+{% endif %}
+{% else %}
+❌ Operator health analysis failed
+{% endif %}
+
+## Resource Distribution
+
+{% if analysis_status.resource_distribution %}
+- **Total Namespaces:** {{ architecture_analysis.resource_distribution.namespace_distribution.total_namespaces }}
+- **System Namespaces:** {{ architecture_analysis.resource_distribution.namespace_distribution.system_namespaces }}
+- **User Namespaces:** {{ architecture_analysis.resource_distribution.namespace_distribution.user_namespaces }}
+- **Namespaces with Quotas:** {{ architecture_analysis.resource_distribution.namespace_distribution.namespaces_with_quotas }}
+- **Namespaces with Limits:** {{ architecture_analysis.resource_distribution.namespace_distribution.namespaces_with_limits }}
+- **Total Pods:** {{ architecture_analysis.resource_distribution.pod_distribution.total_pods }}
+- **Running Pods:** {{ architecture_analysis.resource_distribution.pod_distribution.running_pods }}
+- **Pending Pods:** {{ architecture_analysis.resource_distribution.pod_distribution.pending_pods }}
+- **Failed Pods:** {{ architecture_analysis.resource_distribution.pod_distribution.failed_pods }}
+
+{% if architecture_analysis.resource_distribution.issues | length > 0 %}
+### Resource Distribution Issues
+{% for issue in architecture_analysis.resource_distribution.issues %}
+- ⚠️ {{ issue }}
+{% endfor %}
+{% endif %}
+{% else %}
+❌ Resource distribution analysis failed
+{% endif %}
+
+## Recommendations
+
+### High Priority
+{% if architecture_analysis.cluster_overview.issues | length > 0 %}
+- Address cluster health issues identified in cluster overview
+{% endif %}
+{% if architecture_analysis.node_analysis.issues | length > 0 %}
+- Resolve node health issues
+{% endif %}
+{% if architecture_analysis.resource_distribution.pod_distribution.failed_pods > 0 %}
+- Investigate and resolve failed pods
+{% endif %}
+
+### Medium Priority
+{% if architecture_analysis.network_analysis.network_policies.total_policies == 0 %}
+- Implement network policies for better security
+{% endif %}
+{% if architecture_analysis.storage_analysis.storage_classes.default_storage_class == "Unknown" %}
+- Configure default storage class
+{% endif %}
+{% if architecture_analysis.resource_distribution.namespace_distribution.namespaces_with_quotas < (architecture_analysis.resource_distribution.namespace_distribution.total_namespaces * 0.5) %}
+- Implement resource quotas for better resource management
+{% endif %}
+
+### Low Priority
+{% if architecture_analysis.network_analysis.load_balancers.services_with_load_balancer > 10 %}
+- Review LoadBalancer service usage for cost optimization
+{% endif %}
+{% if architecture_analysis.resource_distribution.pod_distribution.pending_pods > 5 %}
+- Monitor pending pods and resource availability
+{% endif %}
+
+## Analysis Statistics
+
+{% set success_count = 0 %}
+{% set total_count = 0 %}
+{% for key, value in analysis_status.items() %}
+{% set total_count = total_count + 1 %}
+{% if value %}
+{% set success_count = success_count + 1 %}
+{% endif %}
+{% endfor %}
+
+**Total Analysis Components:** {{ total_count }}  
+**Successful Analyses:** {{ success_count }}  
+**Failed Analyses:** {{ total_count - success_count }}  
+**Success Rate:** {{ ((success_count / total_count) * 100) | round(2) }}%  
+
+## Notes
+
+{% if success_count < total_count %}
+⚠️ **Warning:** Some architecture analysis tasks failed. The analysis may be incomplete.
+{% else %}
+✅ **Success:** All architecture analysis tasks completed successfully.
+{% endif %}
+
+This report was generated automatically by the OpenShift Health Check Ansible playbook.

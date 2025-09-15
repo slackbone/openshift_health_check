@@ -1,0 +1,31 @@
+---
+# Architecture Analyzer Role Default Variables
+
+# Analysis settings
+analyze_cluster_overview: true
+analyze_node_architecture: true
+analyze_network_architecture: true
+analyze_storage_architecture: true
+analyze_operator_health: true
+analyze_resource_distribution: true
+
+# Output settings
+architecture_output_dir: "{{ report_output_path }}/architecture_analysis"
+analysis_format: "json"
+
+# Analysis thresholds
+min_master_nodes: 3
+min_worker_nodes: 2
+max_node_cpu_usage: 80
+max_node_memory_usage: 80
+max_pod_density_per_node: 100
+
+# Network analysis settings
+check_network_policies: true
+check_ingress_controllers: true
+check_load_balancers: true
+
+# Storage analysis settings
+check_persistent_volumes: true
+check_storage_classes: true
+check_volume_snapshots: true

@@ -1,0 +1,98 @@
+---
+- name: Collect RBAC information
+  block:
+    - name: Get cluster roles
+      command: "{{ cli_command }} get clusterroles -o json"
+      register: clusterroles_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+
+    - name: Get cluster role bindings
+      command: "{{ cli_command }} get clusterrolebindings -o json"
+      register: clusterrolebindings_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+
+    - name: Get roles
+      command: "{{ cli_command }} get roles --all-namespaces -o json"
+      register: roles_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get role bindings
+      command: "{{ cli_command }} get rolebindings --all-namespaces -o json"
+      register: rolebindings_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get service accounts
+      command: "{{ cli_command }} get serviceaccounts --all-namespaces -o json"
+      register: serviceaccounts_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Save RBAC data to file
+      copy:
+        content: |
+          {
+            "clusterroles_json": {{ clusterroles_json_result.stdout }},
+            "clusterrolebindings_json": {{ clusterrolebindings_json_result.stdout }},
+            "roles_json": {{ roles_json_result.stdout | default('{}') }},
+            "rolebindings_json": {{ rolebindings_json_result.stdout | default('{}') }},
+            "serviceaccounts_json": {{ serviceaccounts_json_result.stdout | default('{}') }},
+            "collection_metadata": {{ collection_metadata | to_nice_json }}
+          }
+        dest: "{{ data_output_dir }}/rbac.json"
+        mode: '0644'
+
+    - name: Set fact for RBAC collection status
+      set_fact:
+        collection_status:
+          rbac: true
+
+    - name: Display RBAC collection status
+      debug:
+        msg: "RBAC information collected successfully"
+
+  rescue:
+    - name: Handle RBAC collection failure
+      debug:
+        msg: "Failed to collect RBAC information: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for RBAC collection status
+      set_fact:
+        collection_status:
+          rbac: false

@@ -1,0 +1,70 @@
+---
+- name: Collect pods information
+  block:
+    - name: Get pods detailed information
+      command: "{{ cli_command }} get pods --all-namespaces -o json"
+      register: pods_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+
+    - name: Get pods with labels
+      command: "{{ cli_command }} get pods --all-namespaces --show-labels"
+      register: pods_labels_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+
+    - name: Get pod templates
+      command: "{{ cli_command }} get podtemplates --all-namespaces -o json"
+      register: pod_templates_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Save pods data to file
+      copy:
+        content: |
+          {
+            "pods_json": {{ pods_json_result.stdout }},
+            "pods_labels": "{{ pods_labels_result.stdout }}",
+            "pod_templates": {{ pod_templates_result.stdout | default('{}') }},
+            "collection_metadata": {{ collection_metadata | to_nice_json }}
+          }
+        dest: "{{ data_output_dir }}/pods.json"
+        mode: '0644'
+
+    - name: Set fact for pods collection status
+      set_fact:
+        collection_status:
+          pods: true
+
+    - name: Display pods collection status
+      debug:
+        msg: "Pods information collected successfully"
+
+  rescue:
+    - name: Handle pods collection failure
+      debug:
+        msg: "Failed to collect pods information: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for pods collection status
+      set_fact:
+        collection_status:
+          pods: false

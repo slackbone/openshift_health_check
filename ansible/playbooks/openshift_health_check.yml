@@ -1,0 +1,78 @@
+---
+# Playbook principal para Avaliação de Saúde do OpenShift
+# Este playbook executa uma análise abrangente de clusters OpenShift 4.17
+- name: Avaliação de Saúde do OpenShift
+  hosts: localhost
+  gather_facts: false
+  vars:
+    # Configurações de conexão com o cluster OpenShift
+    openshift_cluster_url: "{{ cluster_url | default('') }}"
+    openshift_token: "{{ cluster_token | default('') }}"
+    openshift_kubeconfig: "{{ kubeconfig_path | default('~/.kube/config') }}"
+    # Configurações de saída dos relatórios
+    output_dir: "{{ playbook_dir }}/../reports"
+    timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
+    
+  pre_tasks:
+    # Validação das variáveis obrigatórias
+    - name: Validar variáveis obrigatórias
+      fail:
+        msg: "Variável obrigatória '{{ item }}' não foi definida"
+      when: 
+        - item is not defined or item == ""
+      loop:
+        - "{{ openshift_cluster_url }}"
+        - "{{ openshift_token }}"
+        
+    # Criação do diretório de saída
+    - name: Criar diretório de saída
+      file:
+        path: "{{ output_dir }}/{{ timestamp }}"
+        state: directory
+        mode: '0755'
+        
+    # Definir caminho de saída como fact
+    - name: Definir caminho de saída dos relatórios
+      set_fact:
+        report_output_path: "{{ output_dir }}/{{ timestamp }}"
+
+  roles:
+    # Role para coleta de dados do cluster
+    - role: data_collector
+      tags: ['coleta_dados', 'todos']
+      
+    # Role para análise de arquitetura
+    - role: architecture_analyzer
+      tags: ['arquitetura', 'todos']
+      
+    # Role para análise de segurança
+    - role: security_analyzer
+      tags: ['seguranca', 'todos']
+      
+    # Role para análise de boas práticas
+    - role: best_practices_analyzer
+      tags: ['boas_praticas', 'todos']
+      
+    # Role para otimização de recursos
+    - role: resource_optimizer
+      tags: ['recursos', 'todos']
+      
+    # Role para geração de relatórios
+    - role: report_generator
+      tags: ['relatorios', 'todos']
+
+  post_tasks:
+    # Exibir mensagem de conclusão
+    - name: Exibir mensagem de conclusão
+      debug:
+        msg: |
+          Avaliação de Saúde do OpenShift concluída com sucesso!
+          
+          Relatórios gerados em: {{ report_output_path }}
+          
+          Relatórios disponíveis:
+          - Relatório HTML: {{ report_output_path }}/relatorio_avaliacao_openshift.html
+          - Relatório JSON: {{ report_output_path }}/relatorio_avaliacao_openshift.json
+          - Relatório Markdown: {{ report_output_path }}/relatorio_avaliacao_openshift.md
+          
+          Para visualizar o relatório HTML, abra: file://{{ report_output_path }}/relatorio_avaliacao_openshift.html

@@ -1,0 +1,35 @@
+---
+# Security Analyzer Role Default Variables
+
+# Analysis settings
+analyze_rbac: true
+analyze_network_security: true
+analyze_pod_security: true
+analyze_secrets_management: true
+analyze_compliance: true
+
+# Output settings
+security_output_dir: "{{ report_output_path }}/security_analysis"
+analysis_format: "json"
+
+# Security thresholds
+max_privileged_containers: 0
+max_root_containers: 0
+max_host_network_pods: 0
+max_host_pid_pods: 0
+max_host_ipc_pods: 0
+
+# RBAC analysis settings
+check_excessive_permissions: true
+check_privileged_service_accounts: true
+check_cluster_admin_usage: true
+
+# Network security settings
+check_network_policies: true
+check_ingress_security: true
+check_dns_security: true
+
+# Compliance frameworks
+check_cis_benchmarks: true
+check_nist_guidelines: true
+check_pod_security_standards: true

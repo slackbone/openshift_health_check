@@ -1,0 +1,97 @@
+---
+- name: Collect nodes information
+  block:
+    - name: Get nodes detailed information
+      command: "{{ cli_command }} get nodes -o json"
+      register: nodes_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+
+    - name: Get nodes description
+      command: "{{ cli_command }} describe nodes"
+      register: nodes_describe_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+
+    - name: Get nodes with labels
+      command: "{{ cli_command }} get nodes --show-labels"
+      register: nodes_labels_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+
+    - name: Get machine config pools (OpenShift specific)
+      command: "{{ cli_command }} get machineconfigpools -o json"
+      register: machine_config_pools_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get machines (OpenShift specific)
+      command: "{{ cli_command }} get machines -A -o json"
+      register: machines_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Save nodes data to file
+      copy:
+        content: |
+          {
+            "nodes_json": {{ nodes_json_result.stdout }},
+            "nodes_describe": "{{ nodes_describe_result.stdout }}",
+            "nodes_labels": "{{ nodes_labels_result.stdout }}",
+            "machine_config_pools": {{ machine_config_pools_result.stdout | default('{}') }},
+            "machines": {{ machines_result.stdout | default('{}') }},
+            "collection_metadata": {{ collection_metadata | to_nice_json }}
+          }
+        dest: "{{ data_output_dir }}/nodes.json"
+        mode: '0644'
+
+    - name: Set fact for nodes collection status
+      set_fact:
+        collection_status:
+          nodes: true
+
+    - name: Display nodes collection status
+      debug:
+        msg: "Nodes information collected successfully"
+
+  rescue:
+    - name: Handle nodes collection failure
+      debug:
+        msg: "Failed to collect nodes information: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for nodes collection status
+      set_fact:
+        collection_status:
+          nodes: false

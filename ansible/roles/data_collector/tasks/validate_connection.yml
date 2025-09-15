@@ -1,0 +1,75 @@
+---
+- name: Create data output directory
+  file:
+    path: "{{ data_output_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Check if oc command is available
+  command: which oc
+  register: oc_check
+  failed_when: false
+  changed_when: false
+
+- name: Check if kubectl command is available
+  command: which kubectl
+  register: kubectl_check
+  failed_when: false
+  changed_when: false
+
+- name: Fail if neither oc nor kubectl is available
+  fail:
+    msg: "Neither 'oc' nor 'kubectl' command is available. Please install OpenShift CLI or Kubernetes CLI."
+  when: oc_check.rc != 0 and kubectl_check.rc != 0
+
+- name: Set fact for CLI command
+  set_fact:
+    cli_command: "{{ 'oc' if oc_check.rc == 0 else 'kubectl' }}"
+
+- name: Test cluster connectivity
+  command: "{{ cli_command }} cluster-info"
+  register: cluster_connectivity
+  failed_when: false
+  changed_when: false
+  environment:
+    KUBECONFIG: "{{ openshift_kubeconfig }}"
+    {% if openshift_cluster_url %}
+    KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+    {% endif %}
+    {% if openshift_token %}
+    KUBERNETES_TOKEN: "{{ openshift_token }}"
+    {% endif %}
+
+- name: Fail if cluster connectivity test fails
+  fail:
+    msg: "Cannot connect to OpenShift cluster. Please check your credentials and cluster URL."
+  when: cluster_connectivity.rc != 0
+
+- name: Display cluster connectivity status
+  debug:
+    msg: "Successfully connected to OpenShift cluster using {{ cli_command }}"
+
+- name: Get cluster version information
+  command: "{{ cli_command }} version"
+  register: cluster_version
+  environment:
+    KUBECONFIG: "{{ openshift_kubeconfig }}"
+    {% if openshift_cluster_url %}
+    KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+    {% endif %}
+    {% if openshift_token %}
+    KUBERNETES_TOKEN: "{{ openshift_token }}"
+    {% endif %}
+
+- name: Display cluster version
+  debug:
+    msg: "{{ cluster_version.stdout_lines }}"
+
+- name: Set fact for collection metadata
+  set_fact:
+    collection_metadata:
+      cli_command: "{{ cli_command }}"
+      cluster_url: "{{ openshift_cluster_url }}"
+      collection_timestamp: "{{ ansible_date_time.iso8601 }}"
+      collection_host: "{{ inventory_hostname }}"
+      ansible_version: "{{ ansible_version }}"

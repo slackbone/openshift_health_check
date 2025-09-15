@@ -1,0 +1,104 @@
+---
+- name: Analyze network architecture
+  block:
+    - name: Load network-related data
+      include_vars:
+        file: "{{ data_output_path }}/raw_data/services.json"
+        name: services_data
+      when: data_collection_completed | bool
+
+    - name: Load security configs for network policies
+      include_vars:
+        file: "{{ data_output_path }}/raw_data/security_configs.json"
+        name: security_data
+      when: data_collection_completed | bool
+
+    - name: Set default network data if not available
+      set_fact:
+        services_data:
+          services_json: '{"items": []}'
+          routes_json: '{"items": []}'
+          ingresses_json: '{"items": []}'
+          endpoints_json: '{"items": []}'
+        security_data:
+          networkpolicies_json: '{"items": []}'
+      when: not data_collection_completed | bool
+
+    - name: Parse network data
+      set_fact:
+        services_list: "{{ services_data.services_json | from_json }}"
+        routes_list: "{{ services_data.routes_json | from_json }}"
+        ingresses_list: "{{ services_data.ingresses_json | from_json }}"
+        network_policies_list: "{{ security_data.networkpolicies_json | from_json }}"
+
+    - name: Analyze network policies
+      set_fact:
+        network_policies_analysis:
+          total_policies: "{{ network_policies_list.items | length }}"
+          policies_by_namespace: "{{ network_policies_list.items | groupby('metadata.namespace') | map('first') | list }}"
+          namespaces_with_policies: "{{ network_policies_list.items | map(attribute='metadata.namespace') | unique | list | length }}"
+
+    - name: Analyze ingress controllers
+      set_fact:
+        ingress_controllers_analysis:
+          total_routes: "{{ routes_list.items | length }}"
+          total_ingresses: "{{ ingresses_list.items | length }}"
+          routes_by_namespace: "{{ routes_list.items | groupby('metadata.namespace') | map('first') | list }}"
+          ingresses_by_namespace: "{{ ingresses_list.items | groupby('metadata.namespace') | map('first') | list }}"
+
+    - name: Analyze load balancers
+      set_fact:
+        load_balancers_analysis:
+          services_with_external_ips: "{{ services_list.items | selectattr('spec.externalIPs', 'defined') | list | length }}"
+          services_with_load_balancer: "{{ services_list.items | selectattr('spec.type', 'equalto', 'LoadBalancer') | list | length }}"
+          services_with_node_port: "{{ services_list.items | selectattr('spec.type', 'equalto', 'NodePort') | list | length }}"
+
+    - name: Analyze DNS configuration
+      set_fact:
+        dns_analysis:
+          total_services: "{{ services_list.items | length }}"
+          services_with_cluster_ip: "{{ services_list.items | selectattr('spec.clusterIP', 'defined') | list | length }}"
+          headless_services: "{{ services_list.items | selectattr('spec.clusterIP', 'equalto', 'None') | list | length }}"
+
+    - name: Check network architecture issues
+      set_fact:
+        network_issues: []
+      block:
+        - name: Check for namespaces without network policies
+          set_fact:
+            network_issues: "{{ network_issues + ['Some namespaces may not have network policies configured'] }}"
+          when: network_policies_analysis.total_policies == 0
+
+        - name: Check for excessive load balancer services
+          set_fact:
+            network_issues: "{{ network_issues + ['High number of LoadBalancer services may impact costs'] }}"
+          when: load_balancers_analysis.services_with_load_balancer > 10
+
+    - name: Update architecture analysis with network analysis
+      set_fact:
+        architecture_analysis:
+          network_analysis:
+            network_policies: "{{ network_policies_analysis }}"
+            ingress_controllers: "{{ ingress_controllers_analysis }}"
+            load_balancers: "{{ load_balancers_analysis }}"
+            dns_configuration: "{{ dns_analysis }}"
+            issues: "{{ network_issues }}"
+
+    - name: Set fact for network analysis status
+      set_fact:
+        analysis_status:
+          network_analysis: true
+
+    - name: Display network analysis status
+      debug:
+        msg: "Network architecture analysis completed successfully"
+
+  rescue:
+    - name: Handle network analysis failure
+      debug:
+        msg: "Failed to analyze network architecture: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for network analysis status
+      set_fact:
+        analysis_status:
+          network_analysis: false

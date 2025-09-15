@@ -1,0 +1,29 @@
+---
+- name: Include RBAC analysis tasks
+  include_tasks: analyze_rbac.yml
+  when: analyze_rbac | bool
+  tags: ['security', 'rbac']
+
+- name: Include network security analysis tasks
+  include_tasks: analyze_network_security.yml
+  when: analyze_network_security | bool
+  tags: ['security', 'network']
+
+- name: Include pod security analysis tasks
+  include_tasks: analyze_pod_security.yml
+  when: analyze_pod_security | bool
+  tags: ['security', 'pods']
+
+- name: Include secrets management analysis tasks
+  include_tasks: analyze_secrets_management.yml
+  when: analyze_secrets_management | bool
+  tags: ['security', 'secrets']
+
+- name: Include compliance analysis tasks
+  include_tasks: analyze_compliance.yml
+  when: analyze_compliance | bool
+  tags: ['security', 'compliance']
+
+- name: Consolidate security analysis
+  include_tasks: consolidate_analysis.yml
+  tags: ['security', 'consolidation']

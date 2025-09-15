@@ -1,0 +1,79 @@
+---
+- name: Consolidate collected data
+  block:
+    - name: Create consolidated data summary
+      set_fact:
+        consolidated_data:
+          collection_summary:
+            timestamp: "{{ collection_metadata.collection_timestamp }}"
+            cluster_url: "{{ collection_metadata.cluster_url }}"
+            cli_command: "{{ collection_metadata.cli_command }}"
+            collection_host: "{{ collection_metadata.collection_host }}"
+            ansible_version: "{{ collection_metadata.ansible_version }}"
+            collection_status: "{{ collection_status }}"
+          data_files:
+            cluster_info: "{{ 'cluster_info.json' if collection_status.cluster_info else null }}"
+            nodes: "{{ 'nodes.json' if collection_status.nodes else null }}"
+            namespaces: "{{ 'namespaces.json' if collection_status.namespaces else null }}"
+            pods: "{{ 'pods.json' if collection_status.pods else null }}"
+            services: "{{ 'services.json' if collection_status.services else null }}"
+            deployments: "{{ 'deployments.json' if collection_status.deployments else null }}"
+            rbac: "{{ 'rbac.json' if collection_status.rbac else null }}"
+            security_configs: "{{ 'security_configs.json' if collection_status.security_configs else null }}"
+            operators: "{{ 'operators.json' if collection_status.operators else null }}"
+            metrics: "{{ 'metrics.json' if collection_status.metrics else null }}"
+            events: "{{ 'events.json' if collection_status.events else null }}"
+
+    - name: Save consolidated data summary
+      copy:
+        content: "{{ consolidated_data | to_nice_json }}"
+        dest: "{{ data_output_dir }}/collection_summary.json"
+        mode: '0644'
+
+    - name: Create data collection report
+      template:
+        src: data_collection_report.j2
+        dest: "{{ data_output_dir }}/data_collection_report.md"
+        mode: '0644'
+
+    - name: Compress data directory if requested
+      archive:
+        path: "{{ data_output_dir }}"
+        dest: "{{ data_output_dir }}.tar.gz"
+        format: gz
+        remove: false
+      when: compress_data | bool
+
+    - name: Set fact for data collection completion
+      set_fact:
+        data_collection_completed: true
+        data_output_path: "{{ data_output_dir }}"
+
+    - name: Display data collection summary
+      debug:
+        msg: |
+          Data collection completed!
+          
+          Collection Status:
+          - Cluster Info: {{ '✓' if collection_status.cluster_info else '✗' }}
+          - Nodes: {{ '✓' if collection_status.nodes else '✗' }}
+          - Namespaces: {{ '✓' if collection_status.namespaces else '✗' }}
+          - Pods: {{ '✓' if collection_status.pods else '✗' }}
+          - Services: {{ '✓' if collection_status.services else '✗' }}
+          - Deployments: {{ '✓' if collection_status.deployments else '✗' }}
+          - RBAC: {{ '✓' if collection_status.rbac else '✗' }}
+          - Security Configs: {{ '✓' if collection_status.security_configs else '✗' }}
+          - Operators: {{ '✓' if collection_status.operators else '✗' }}
+          - Metrics: {{ '✓' if collection_status.metrics else '✗' }}
+          - Events: {{ '✓' if collection_status.events else '✗' }}
+          
+          Data saved to: {{ data_output_dir }}
+
+  rescue:
+    - name: Handle data consolidation failure
+      debug:
+        msg: "Failed to consolidate collected data: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for data collection completion
+      set_fact:
+        data_collection_completed: false

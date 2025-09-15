@@ -1,0 +1,141 @@
+---
+# Configuração de Exemplo para Avaliação de Saúde do OpenShift
+# Copie este arquivo para group_vars/all.yml e customize conforme necessário
+# Otimizado para execução em RHCOS (Red Hat CoreOS)
+
+# Configurações de conexão OpenShift/Kubernetes
+openshift_cluster_url: "https://api.cluster.example.com:6443"
+openshift_token: "sha256~seu-token-aqui"
+openshift_kubeconfig: "~/.kube/config"
+openshift_context: ""
+
+# Configurações de coleta de dados
+collect_cluster_info: true
+collect_nodes: true
+collect_namespaces: true
+collect_pods: true
+collect_services: true
+collect_deployments: true
+collect_rbac: true
+collect_security_configs: true
+collect_operators: true
+collect_metrics: true
+collect_events: true
+
+# Collection filters (optional)
+namespace_filter: ""
+label_selector: ""
+field_selector: ""
+
+# Analysis settings
+analyze_cluster_overview: true
+analyze_node_architecture: true
+analyze_network_architecture: true
+analyze_storage_architecture: true
+analyze_operator_health: true
+analyze_resource_distribution: true
+
+analyze_rbac: true
+analyze_network_security: true
+analyze_pod_security: true
+analyze_secrets_management: true
+analyze_compliance: true
+
+# Security thresholds
+max_privileged_containers: 0
+max_root_containers: 0
+max_host_network_pods: 0
+max_host_pid_pods: 0
+max_host_ipc_pods: 0
+
+# RBAC analysis settings
+check_excessive_permissions: true
+check_privileged_service_accounts: true
+check_cluster_admin_usage: true
+
+# Network security settings
+check_network_policies: true
+check_ingress_security: true
+check_dns_security: true
+
+# Compliance frameworks
+check_cis_benchmarks: true
+check_nist_guidelines: true
+check_pod_security_standards: true
+
+# Architecture thresholds
+min_master_nodes: 3
+min_worker_nodes: 2
+max_node_cpu_usage: 80
+max_node_memory_usage: 80
+max_pod_density_per_node: 100
+
+# Network analysis settings
+check_network_policies: true
+check_ingress_controllers: true
+check_load_balancers: true
+
+# Storage analysis settings
+check_persistent_volumes: true
+check_storage_classes: true
+check_volume_snapshots: true
+
+# Output settings
+output_dir: "{{ playbook_dir }}/../reports"
+timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
+compress_reports: false
+
+# Timeout settings
+command_timeout: 300
+connection_timeout: 30
+
+# Resource limits for data collection
+max_pods_per_namespace: 1000
+max_events_per_namespace: 1000
+max_metrics_points: 10000
+
+# Logging settings
+log_level: "INFO"
+log_format: "json"
+
+# Report generation settings
+generate_html_report: true
+generate_pdf_report: false
+generate_json_report: true
+generate_markdown_report: true
+
+# Custom analysis settings
+custom_checks:
+  - name: "Check for specific labels"
+    type: "pod"
+    condition: "item.metadata.labels.security == 'high'"
+    severity: "warning"
+    
+  - name: "Check for specific annotations"
+    type: "namespace"
+    condition: "item.metadata.annotations.owner == 'security-team'"
+    severity: "info"
+
+# Notification settings (optional)
+notifications:
+  enabled: false
+  webhook_url: ""
+  slack_channel: ""
+  email_recipients: []
+  
+# Integration settings (optional)
+integrations:
+  prometheus:
+    enabled: false
+    url: ""
+    token: ""
+    
+  grafana:
+    enabled: false
+    url: ""
+    token: ""
+    
+  elasticsearch:
+    enabled: false
+    url: ""
+    index: "openshift-health-check"

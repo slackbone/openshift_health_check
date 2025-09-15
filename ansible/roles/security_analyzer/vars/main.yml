@@ -1,0 +1,50 @@
+---
+# Security Analyzer Role Variables
+
+# Security analysis results structure
+security_analysis:
+  rbac_analysis:
+    cluster_roles: {}
+    cluster_role_bindings: {}
+    roles: {}
+    role_bindings: {}
+    service_accounts: {}
+    excessive_permissions: []
+    privileged_accounts: []
+    issues: []
+    
+  network_security:
+    network_policies: {}
+    ingress_security: {}
+    dns_security: {}
+    network_issues: []
+    
+  pod_security:
+    security_context_constraints: {}
+    pod_security_policies: {}
+    privileged_containers: []
+    root_containers: []
+    host_network_pods: []
+    host_pid_pods: []
+    host_ipc_pods: []
+    pod_security_issues: []
+    
+  secrets_management:
+    secrets_analysis: {}
+    configmaps_analysis: {}
+    secrets_issues: []
+    
+  compliance_analysis:
+    cis_benchmarks: {}
+    nist_guidelines: {}
+    pod_security_standards: {}
+    compliance_score: 0
+    compliance_issues: []
+
+# Analysis status
+security_analysis_status:
+  rbac_analysis: false
+  network_security: false
+  pod_security: false
+  secrets_management: false
+  compliance_analysis: false

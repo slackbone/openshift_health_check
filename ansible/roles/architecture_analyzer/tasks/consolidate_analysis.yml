@@ -1,0 +1,49 @@
+---
+- name: Consolidate architecture analysis
+  block:
+    - name: Create architecture analysis output directory
+      file:
+        path: "{{ architecture_output_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Save architecture analysis results
+      copy:
+        content: "{{ architecture_analysis | to_nice_json }}"
+        dest: "{{ architecture_output_dir }}/architecture_analysis.json"
+        mode: '0644'
+
+    - name: Create architecture analysis report
+      template:
+        src: architecture_analysis_report.j2
+        dest: "{{ architecture_output_dir }}/architecture_analysis_report.md"
+        mode: '0644'
+
+    - name: Set fact for architecture analysis completion
+      set_fact:
+        architecture_analysis_completed: true
+        architecture_analysis_path: "{{ architecture_output_dir }}"
+
+    - name: Display architecture analysis summary
+      debug:
+        msg: |
+          Architecture analysis completed!
+          
+          Analysis Status:
+          - Cluster Overview: {{ '✓' if analysis_status.cluster_overview else '✗' }}
+          - Node Analysis: {{ '✓' if analysis_status.node_analysis else '✗' }}
+          - Network Analysis: {{ '✓' if analysis_status.network_analysis else '✗' }}
+          - Storage Analysis: {{ '✓' if analysis_status.storage_analysis else '✗' }}
+          - Operator Analysis: {{ '✓' if analysis_status.operator_analysis else '✗' }}
+          - Resource Distribution: {{ '✓' if analysis_status.resource_distribution else '✗' }}
+          
+          Analysis saved to: {{ architecture_output_dir }}
+
+  rescue:
+    - name: Handle architecture analysis consolidation failure
+      debug:
+        msg: "Failed to consolidate architecture analysis: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for architecture analysis completion
+      set_fact:
+        architecture_analysis_completed: false

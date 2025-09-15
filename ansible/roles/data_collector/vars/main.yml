@@ -1,0 +1,76 @@
+---
+# Data Collector Role Variables
+
+# OC/Kubectl commands for data collection
+oc_commands:
+  cluster_info:
+    - "oc cluster-info"
+    - "oc version"
+    - "oc get clusterversion"
+    - "oc get nodes -o wide"
+    - "oc get namespaces"
+    
+  nodes:
+    - "oc get nodes -o json"
+    - "oc describe nodes"
+    - "oc get nodes --show-labels"
+    
+  namespaces:
+    - "oc get namespaces -o json"
+    - "oc get projects -o json"
+    
+  pods:
+    - "oc get pods --all-namespaces -o json"
+    - "oc get pods --all-namespaces --show-labels"
+    
+  services:
+    - "oc get services --all-namespaces -o json"
+    - "oc get routes --all-namespaces -o json"
+    - "oc get ingresses --all-namespaces -o json"
+    
+  deployments:
+    - "oc get deployments --all-namespaces -o json"
+    - "oc get replicasets --all-namespaces -o json"
+    - "oc get daemonsets --all-namespaces -o json"
+    - "oc get statefulsets --all-namespaces -o json"
+    
+  rbac:
+    - "oc get clusterroles -o json"
+    - "oc get clusterrolebindings -o json"
+    - "oc get roles --all-namespaces -o json"
+    - "oc get rolebindings --all-namespaces -o json"
+    - "oc get serviceaccounts --all-namespaces -o json"
+    
+  security_configs:
+    - "oc get securitycontextconstraints -o json"
+    - "oc get networkpolicies --all-namespaces -o json"
+    - "oc get podsecuritypolicies --all-namespaces -o json"
+    - "oc get secrets --all-namespaces -o json"
+    
+  operators:
+    - "oc get clusterserviceversions --all-namespaces -o json"
+    - "oc get subscriptions --all-namespaces -o json"
+    - "oc get installplans --all-namespaces -o json"
+    - "oc get operatorgroups --all-namespaces -o json"
+    
+  metrics:
+    - "oc get --raw /metrics"
+    - "oc adm top nodes"
+    - "oc adm top pods --all-namespaces"
+    
+  events:
+    - "oc get events --all-namespaces -o json"
+
+# Data collection status tracking
+collection_status:
+  cluster_info: false
+  nodes: false
+  namespaces: false
+  pods: false
+  services: false
+  deployments: false
+  rbac: false
+  security_configs: false
+  operators: false
+  metrics: false
+  events: false

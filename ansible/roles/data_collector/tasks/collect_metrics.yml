@@ -1,0 +1,100 @@
+---
+- name: Collect metrics information
+  block:
+    - name: Get cluster metrics (if available)
+      command: "{{ cli_command }} get --raw /metrics"
+      register: cluster_metrics_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get top nodes
+      command: "{{ cli_command }} adm top nodes"
+      register: top_nodes_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get top pods
+      command: "{{ cli_command }} adm top pods --all-namespaces"
+      register: top_pods_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get resource usage by namespace
+      command: "{{ cli_command }} adm top pods --all-namespaces --sort-by=cpu"
+      register: top_pods_cpu_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get resource usage by memory
+      command: "{{ cli_command }} adm top pods --all-namespaces --sort-by=memory"
+      register: top_pods_memory_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Save metrics data to file
+      copy:
+        content: |
+          {
+            "cluster_metrics": "{{ cluster_metrics_result.stdout | default('') }}",
+            "top_nodes": "{{ top_nodes_result.stdout | default('') }}",
+            "top_pods": "{{ top_pods_result.stdout | default('') }}",
+            "top_pods_cpu": "{{ top_pods_cpu_result.stdout | default('') }}",
+            "top_pods_memory": "{{ top_pods_memory_result.stdout | default('') }}",
+            "collection_metadata": {{ collection_metadata | to_nice_json }}
+          }
+        dest: "{{ data_output_dir }}/metrics.json"
+        mode: '0644'
+
+    - name: Set fact for metrics collection status
+      set_fact:
+        collection_status:
+          metrics: true
+
+    - name: Display metrics collection status
+      debug:
+        msg: "Metrics information collected successfully"
+
+  rescue:
+    - name: Handle metrics collection failure
+      debug:
+        msg: "Failed to collect metrics information: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for metrics collection status
+      set_fact:
+        collection_status:
+          metrics: false

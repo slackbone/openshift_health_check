@@ -1,0 +1,82 @@
+---
+- name: Analyze node architecture
+  block:
+    - name: Load nodes data
+      include_vars:
+        file: "{{ data_output_path }}/raw_data/nodes.json"
+        name: nodes_data
+      when: data_collection_completed | bool
+
+    - name: Set default nodes data if not available
+      set_fact:
+        nodes_data:
+          nodes_json: '{"items": []}'
+          nodes_describe: "No nodes data available"
+          nodes_labels: "No nodes labels available"
+      when: not data_collection_completed | bool
+
+    - name: Parse nodes JSON
+      set_fact:
+        nodes_list: "{{ nodes_data.nodes_json | from_json }}"
+      when: nodes_data.nodes_json is defined
+
+    - name: Set default nodes list
+      set_fact:
+        nodes_list:
+          items: []
+      when: nodes_data.nodes_json is not defined
+
+    - name: Analyze node distribution
+      set_fact:
+        node_distribution:
+          total_nodes: "{{ nodes_list.items | length }}"
+          master_nodes: "{{ nodes_list.items | selectattr('metadata.labels', 'defined') | selectattr('metadata.labels.node-role.kubernetes.io/master', 'defined') | list | length }}"
+          worker_nodes: "{{ nodes_list.items | selectattr('metadata.labels', 'defined') | selectattr('metadata.labels.node-role.kubernetes.io/worker', 'defined') | list | length }}"
+          infrastructure_nodes: "{{ nodes_list.items | selectattr('metadata.labels', 'defined') | selectattr('metadata.labels.node-role.kubernetes.io/infra', 'defined') | list | length }}"
+
+    - name: Analyze node health
+      set_fact:
+        node_health_issues: []
+      block:
+        - name: Check node conditions
+          set_fact:
+            node_health_issues: "{{ node_health_issues + ['Node ' + item.metadata.name + ' has issues: ' + (item.status.conditions | selectattr('status', 'equalto', 'False') | map(attribute='type') | list | join(', '))] }}"
+          loop: "{{ nodes_list.items }}"
+          when: item.status.conditions is defined and (item.status.conditions | selectattr('status', 'equalto', 'False') | list | length > 0)
+
+    - name: Analyze resource utilization
+      set_fact:
+        resource_utilization:
+          total_cpu_cores: "{{ nodes_list.items | sum(attribute='status.capacity.cpu') | int }}"
+          total_memory: "{{ nodes_list.items | sum(attribute='status.capacity.memory') | int }}"
+          allocatable_cpu: "{{ nodes_list.items | sum(attribute='status.allocatable.cpu') | int }}"
+          allocatable_memory: "{{ nodes_list.items | sum(attribute='status.allocatable.memory') | int }}"
+
+    - name: Update architecture analysis with node analysis
+      set_fact:
+        architecture_analysis:
+          node_analysis:
+            node_distribution: "{{ node_distribution }}"
+            node_health: "{{ node_health_issues }}"
+            resource_utilization: "{{ resource_utilization }}"
+            node_labels: "{{ nodes_data.nodes_labels }}"
+            issues: "{{ node_health_issues }}"
+
+    - name: Set fact for node analysis status
+      set_fact:
+        analysis_status:
+          node_analysis: true
+
+    - name: Display node analysis status
+      debug:
+        msg: "Node architecture analysis completed successfully"
+
+  rescue:
+    - name: Handle node analysis failure
+      debug:
+        msg: "Failed to analyze node architecture: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for node analysis status
+      set_fact:
+        analysis_status:
+          node_analysis: false

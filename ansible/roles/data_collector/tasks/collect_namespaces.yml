@@ -1,0 +1,85 @@
+---
+- name: Collect namespaces information
+  block:
+    - name: Get namespaces detailed information
+      command: "{{ cli_command }} get namespaces -o json"
+      register: namespaces_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+
+    - name: Get projects (OpenShift specific)
+      command: "{{ cli_command }} get projects -o json"
+      register: projects_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get resource quotas
+      command: "{{ cli_command }} get resourcequotas --all-namespaces -o json"
+      register: resource_quotas_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get limit ranges
+      command: "{{ cli_command }} get limitranges --all-namespaces -o json"
+      register: limit_ranges_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Save namespaces data to file
+      copy:
+        content: |
+          {
+            "namespaces_json": {{ namespaces_json_result.stdout }},
+            "projects_json": {{ projects_json_result.stdout | default('{}') }},
+            "resource_quotas": {{ resource_quotas_result.stdout | default('{}') }},
+            "limit_ranges": {{ limit_ranges_result.stdout | default('{}') }},
+            "collection_metadata": {{ collection_metadata | to_nice_json }}
+          }
+        dest: "{{ data_output_dir }}/namespaces.json"
+        mode: '0644'
+
+    - name: Set fact for namespaces collection status
+      set_fact:
+        collection_status:
+          namespaces: true
+
+    - name: Display namespaces collection status
+      debug:
+        msg: "Namespaces information collected successfully"
+
+  rescue:
+    - name: Handle namespaces collection failure
+      debug:
+        msg: "Failed to collect namespaces information: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for namespaces collection status
+      set_fact:
+        collection_status:
+          namespaces: false

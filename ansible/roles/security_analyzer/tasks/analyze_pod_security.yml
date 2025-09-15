@@ -1,0 +1,98 @@
+---
+- name: Analyze pod security
+  block:
+    - name: Load pods and security data
+      include_vars:
+        file: "{{ data_output_path }}/raw_data/pods.json"
+        name: pods_data
+      when: data_collection_completed | bool
+
+    - name: Load security configs
+      include_vars:
+        file: "{{ data_output_path }}/raw_data/security_configs.json"
+        name: security_data
+      when: data_collection_completed | bool
+
+    - name: Set default data if not available
+      set_fact:
+        pods_data:
+          pods_json: '{"items": []}'
+        security_data:
+          securitycontextconstraints: '{"items": []}'
+          podsecuritypolicies_json: '{"items": []}'
+      when: not data_collection_completed | bool
+
+    - name: Parse data
+      set_fact:
+        pods_list: "{{ pods_data.pods_json | from_json }}"
+        scc_list: "{{ security_data.securitycontextconstraints | from_json }}"
+        psp_list: "{{ security_data.podsecuritypolicies_json | from_json }}"
+
+    - name: Analyze security context constraints
+      set_fact:
+        scc_analysis:
+          total_sccs: "{{ scc_list.items | length }}"
+          privileged_sccs: "{{ scc_list.items | selectattr('allowPrivilegedContainer', 'equalto', true) | list | length }}"
+          host_network_sccs: "{{ scc_list.items | selectattr('allowHostNetwork', 'equalto', true) | list | length }}"
+          host_pid_sccs: "{{ scc_list.items | selectattr('allowHostPID', 'equalto', true) | list | length }}"
+
+    - name: Analyze pod security
+      set_fact:
+        pod_security_analysis:
+          total_pods: "{{ pods_list.items | length }}"
+          privileged_containers: "{{ pods_list.items | selectattr('spec.containers', 'defined') | selectattr('spec.containers', 'selectattr', 'securityContext.privileged', 'equalto', true) | list | length }}"
+          root_containers: "{{ pods_list.items | selectattr('spec.containers', 'defined') | selectattr('spec.containers', 'selectattr', 'securityContext.runAsUser', 'equalto', 0) | list | length }}"
+          host_network_pods: "{{ pods_list.items | selectattr('spec.hostNetwork', 'equalto', true) | list | length }}"
+          host_pid_pods: "{{ pods_list.items | selectattr('spec.hostPID', 'equalto', true) | list | length }}"
+          host_ipc_pods: "{{ pods_list.items | selectattr('spec.hostIPC', 'equalto', true) | list | length }}"
+
+    - name: Check pod security issues
+      set_fact:
+        pod_security_issues: []
+      block:
+        - name: Check for privileged containers
+          set_fact:
+            pod_security_issues: "{{ pod_security_issues + ['Privileged containers detected: ' + (pod_security_analysis.privileged_containers | string)] }}"
+          when: pod_security_analysis.privileged_containers > max_privileged_containers
+
+        - name: Check for root containers
+          set_fact:
+            pod_security_issues: "{{ pod_security_issues + ['Root containers detected: ' + (pod_security_analysis.root_containers | string)] }}"
+          when: pod_security_analysis.root_containers > max_root_containers
+
+        - name: Check for host network pods
+          set_fact:
+            pod_security_issues: "{{ pod_security_issues + ['Host network pods detected: ' + (pod_security_analysis.host_network_pods | string)] }}"
+          when: pod_security_analysis.host_network_pods > max_host_network_pods
+
+    - name: Update security analysis with pod security
+      set_fact:
+        security_analysis:
+          pod_security:
+            security_context_constraints: "{{ scc_analysis }}"
+            pod_security_policies: "{{ psp_list.items | length }}"
+            privileged_containers: "{{ pod_security_analysis.privileged_containers }}"
+            root_containers: "{{ pod_security_analysis.root_containers }}"
+            host_network_pods: "{{ pod_security_analysis.host_network_pods }}"
+            host_pid_pods: "{{ pod_security_analysis.host_pid_pods }}"
+            host_ipc_pods: "{{ pod_security_analysis.host_ipc_pods }}"
+            pod_security_issues: "{{ pod_security_issues }}"
+
+    - name: Set fact for pod security analysis status
+      set_fact:
+        security_analysis_status:
+          pod_security: true
+
+    - name: Display pod security analysis status
+      debug:
+        msg: "Pod security analysis completed successfully"
+
+  rescue:
+    - name: Handle pod security analysis failure
+      debug:
+        msg: "Failed to analyze pod security: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for pod security analysis status
+      set_fact:
+        security_analysis_status:
+          pod_security: false

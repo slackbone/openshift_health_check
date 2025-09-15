@@ -1,0 +1,63 @@
+---
+- name: Include connection validation tasks
+  include_tasks: validate_connection.yml
+  tags: ['data_collection', 'validation']
+
+- name: Include cluster info collection tasks
+  include_tasks: collect_cluster_info.yml
+  when: collect_cluster_info | bool
+  tags: ['data_collection', 'cluster_info']
+
+- name: Include nodes collection tasks
+  include_tasks: collect_nodes.yml
+  when: collect_nodes | bool
+  tags: ['data_collection', 'nodes']
+
+- name: Include namespaces collection tasks
+  include_tasks: collect_namespaces.yml
+  when: collect_namespaces | bool
+  tags: ['data_collection', 'namespaces']
+
+- name: Include pods collection tasks
+  include_tasks: collect_pods.yml
+  when: collect_pods | bool
+  tags: ['data_collection', 'pods']
+
+- name: Include services collection tasks
+  include_tasks: collect_services.yml
+  when: collect_services | bool
+  tags: ['data_collection', 'services']
+
+- name: Include deployments collection tasks
+  include_tasks: collect_deployments.yml
+  when: collect_deployments | bool
+  tags: ['data_collection', 'deployments']
+
+- name: Include RBAC collection tasks
+  include_tasks: collect_rbac.yml
+  when: collect_rbac | bool
+  tags: ['data_collection', 'rbac']
+
+- name: Include security configs collection tasks
+  include_tasks: collect_security_configs.yml
+  when: collect_security_configs | bool
+  tags: ['data_collection', 'security']
+
+- name: Include operators collection tasks
+  include_tasks: collect_operators.yml
+  when: collect_operators | bool
+  tags: ['data_collection', 'operators']
+
+- name: Include metrics collection tasks
+  include_tasks: collect_metrics.yml
+  when: collect_metrics | bool
+  tags: ['data_collection', 'metrics']
+
+- name: Include events collection tasks
+  include_tasks: collect_events.yml
+  when: collect_events | bool
+  tags: ['data_collection', 'events']
+
+- name: Consolidate collected data
+  include_tasks: consolidate_data.yml
+  tags: ['data_collection', 'consolidation']

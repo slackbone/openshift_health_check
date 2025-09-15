@@ -1,0 +1,118 @@
+---
+- name: Analyze RBAC
+  block:
+    - name: Load RBAC data
+      include_vars:
+        file: "{{ data_output_path }}/raw_data/rbac.json"
+        name: rbac_data
+      when: data_collection_completed | bool
+
+    - name: Set default RBAC data if not available
+      set_fact:
+        rbac_data:
+          clusterroles_json: '{"items": []}'
+          clusterrolebindings_json: '{"items": []}'
+          roles_json: '{"items": []}'
+          rolebindings_json: '{"items": []}'
+          serviceaccounts_json: '{"items": []}'
+      when: not data_collection_completed | bool
+
+    - name: Parse RBAC data
+      set_fact:
+        cluster_roles: "{{ rbac_data.clusterroles_json | from_json }}"
+        cluster_role_bindings: "{{ rbac_data.clusterrolebindings_json | from_json }}"
+        roles: "{{ rbac_data.roles_json | from_json }}"
+        role_bindings: "{{ rbac_data.rolebindings_json | from_json }}"
+        service_accounts: "{{ rbac_data.serviceaccounts_json | from_json }}"
+
+    - name: Analyze cluster roles
+      set_fact:
+        cluster_roles_analysis:
+          total_cluster_roles: "{{ cluster_roles.items | length }}"
+          cluster_admin_roles: "{{ cluster_roles.items | selectattr('metadata.name', 'equalto', 'cluster-admin') | list | length }}"
+          system_roles: "{{ cluster_roles.items | selectattr('metadata.name', 'match', '^system:') | list | length }}"
+          custom_roles: "{{ cluster_roles.items | rejectattr('metadata.name', 'match', '^(cluster-admin|system:)') | list | length }}"
+
+    - name: Analyze cluster role bindings
+      set_fact:
+        cluster_role_bindings_analysis:
+          total_bindings: "{{ cluster_role_bindings.items | length }}"
+          cluster_admin_bindings: "{{ cluster_role_bindings.items | selectattr('roleRef.name', 'equalto', 'cluster-admin') | list | length }}"
+          system_bindings: "{{ cluster_role_bindings.items | selectattr('roleRef.name', 'match', '^system:') | list | length }}"
+          custom_bindings: "{{ cluster_role_bindings.items | rejectattr('roleRef.name', 'match', '^(cluster-admin|system:)') | list | length }}"
+
+    - name: Analyze service accounts
+      set_fact:
+        service_accounts_analysis:
+          total_service_accounts: "{{ service_accounts.items | length }}"
+          service_accounts_by_namespace: "{{ service_accounts.items | groupby('metadata.namespace') | map('first') | list }}"
+          default_service_accounts: "{{ service_accounts.items | selectattr('metadata.name', 'equalto', 'default') | list | length }}"
+
+    - name: Check for excessive permissions
+      set_fact:
+        excessive_permissions: []
+      block:
+        - name: Check for cluster-admin usage
+          set_fact:
+            excessive_permissions: "{{ excessive_permissions + ['Cluster-admin role is being used: ' + (cluster_role_bindings_analysis.cluster_admin_bindings | string) + ' bindings'] }}"
+          when: cluster_role_bindings_analysis.cluster_admin_bindings > 0 and check_cluster_admin_usage | bool
+
+        - name: Check for wildcard permissions
+          set_fact:
+            excessive_permissions: "{{ excessive_permissions + ['Some roles may have wildcard permissions'] }}"
+          when: cluster_roles.items | selectattr('rules', 'defined') | selectattr('rules', 'selectattr', 'verbs', 'defined') | selectattr('rules', 'selectattr', 'verbs', 'contains', '*') | list | length > 0
+
+    - name: Check for privileged service accounts
+      set_fact:
+        privileged_accounts: []
+      block:
+        - name: Check for service accounts with cluster-admin
+          set_fact:
+            privileged_accounts: "{{ privileged_accounts + ['Service accounts with cluster-admin role detected'] }}"
+          when: cluster_role_bindings.items | selectattr('roleRef.name', 'equalto', 'cluster-admin') | selectattr('subjects', 'defined') | selectattr('subjects', 'selectattr', 'kind', 'equalto', 'ServiceAccount') | list | length > 0
+
+    - name: Check RBAC issues
+      set_fact:
+        rbac_issues: []
+      block:
+        - name: Check for excessive cluster-admin usage
+          set_fact:
+            rbac_issues: "{{ rbac_issues + ['Excessive use of cluster-admin role'] }}"
+          when: cluster_role_bindings_analysis.cluster_admin_bindings > 3
+
+        - name: Check for missing RBAC policies
+          set_fact:
+            rbac_issues: "{{ rbac_issues + ['Some namespaces may not have proper RBAC policies'] }}"
+          when: role_bindings.items | length < (service_accounts.items | length * 0.5)
+
+    - name: Update security analysis with RBAC analysis
+      set_fact:
+        security_analysis:
+          rbac_analysis:
+            cluster_roles: "{{ cluster_roles_analysis }}"
+            cluster_role_bindings: "{{ cluster_role_bindings_analysis }}"
+            roles: "{{ roles.items | length }}"
+            role_bindings: "{{ role_bindings.items | length }}"
+            service_accounts: "{{ service_accounts_analysis }}"
+            excessive_permissions: "{{ excessive_permissions }}"
+            privileged_accounts: "{{ privileged_accounts }}"
+            issues: "{{ rbac_issues }}"
+
+    - name: Set fact for RBAC analysis status
+      set_fact:
+        security_analysis_status:
+          rbac_analysis: true
+
+    - name: Display RBAC analysis status
+      debug:
+        msg: "RBAC analysis completed successfully"
+
+  rescue:
+    - name: Handle RBAC analysis failure
+      debug:
+        msg: "Failed to analyze RBAC: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for RBAC analysis status
+      set_fact:
+        security_analysis_status:
+          rbac_analysis: false

@@ -1,0 +1,86 @@
+---
+- name: Collect events information
+  block:
+    - name: Get events from all namespaces
+      command: "{{ cli_command }} get events --all-namespaces -o json"
+      register: events_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get recent events (last 1 hour)
+      command: "{{ cli_command }} get events --all-namespaces --field-selector lastTimestamp>={{ (ansible_date_time.epoch | int - 3600) | strftime('%Y-%m-%dT%H:%M:%SZ') }} -o json"
+      register: recent_events_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get warning events
+      command: "{{ cli_command }} get events --all-namespaces --field-selector type=Warning -o json"
+      register: warning_events_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get error events
+      command: "{{ cli_command }} get events --all-namespaces --field-selector type=Error -o json"
+      register: error_events_json_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Save events data to file
+      copy:
+        content: |
+          {
+            "events_json": {{ events_json_result.stdout | default('{}') }},
+            "recent_events_json": {{ recent_events_json_result.stdout | default('{}') }},
+            "warning_events_json": {{ warning_events_json_result.stdout | default('{}') }},
+            "error_events_json": {{ error_events_json_result.stdout | default('{}') }},
+            "collection_metadata": {{ collection_metadata | to_nice_json }}
+          }
+        dest: "{{ data_output_dir }}/events.json"
+        mode: '0644'
+
+    - name: Set fact for events collection status
+      set_fact:
+        collection_status:
+          events: true
+
+    - name: Display events collection status
+      debug:
+        msg: "Events information collected successfully"
+
+  rescue:
+    - name: Handle events collection failure
+      debug:
+        msg: "Failed to collect events information: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for events collection status
+      set_fact:
+        collection_status:
+          events: false

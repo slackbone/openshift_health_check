@@ -1,0 +1,83 @@
+---
+- name: Collect cluster information
+  block:
+    - name: Get cluster info
+      command: "{{ cli_command }} cluster-info"
+      register: cluster_info_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+
+    - name: Get cluster version details
+      command: "{{ cli_command }} get clusterversion -o json"
+      register: cluster_version_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+      failed_when: false
+
+    - name: Get nodes overview
+      command: "{{ cli_command }} get nodes -o wide"
+      register: nodes_overview_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+
+    - name: Get namespaces overview
+      command: "{{ cli_command }} get namespaces"
+      register: namespaces_overview_result
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+        {% if openshift_cluster_url %}
+        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
+        {% endif %}
+        {% if openshift_token %}
+        KUBERNETES_TOKEN: "{{ openshift_token }}"
+        {% endif %}
+
+    - name: Save cluster info to file
+      copy:
+        content: |
+          {
+            "cluster_info": "{{ cluster_info_result.stdout }}",
+            "cluster_version": {{ cluster_version_result.stdout | default('{}') }},
+            "nodes_overview": "{{ nodes_overview_result.stdout }}",
+            "namespaces_overview": "{{ namespaces_overview_result.stdout }}",
+            "collection_metadata": {{ collection_metadata | to_nice_json }}
+          }
+        dest: "{{ data_output_dir }}/cluster_info.json"
+        mode: '0644'
+
+    - name: Set fact for cluster info collection status
+      set_fact:
+        collection_status:
+          cluster_info: true
+
+    - name: Display cluster info collection status
+      debug:
+        msg: "Cluster information collected successfully"
+
+  rescue:
+    - name: Handle cluster info collection failure
+      debug:
+        msg: "Failed to collect cluster information: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for cluster info collection status
+      set_fact:
+        collection_status:
+          cluster_info: false

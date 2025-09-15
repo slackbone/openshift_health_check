@@ -1,0 +1,54 @@
+---
+# Architecture Analyzer Role Variables
+
+# Analysis results structure
+architecture_analysis:
+  cluster_overview:
+    cluster_version: ""
+    total_nodes: 0
+    master_nodes: 0
+    worker_nodes: 0
+    infrastructure_nodes: 0
+    cluster_health: "unknown"
+    issues: []
+    
+  node_analysis:
+    node_distribution: {}
+    node_health: {}
+    resource_utilization: {}
+    node_labels: {}
+    issues: []
+    
+  network_analysis:
+    network_policies: {}
+    ingress_controllers: {}
+    load_balancers: {}
+    dns_configuration: {}
+    issues: []
+    
+  storage_analysis:
+    persistent_volumes: {}
+    storage_classes: {}
+    volume_snapshots: {}
+    storage_utilization: {}
+    issues: []
+    
+  operator_analysis:
+    operator_health: {}
+    operator_versions: {}
+    operator_issues: []
+    
+  resource_distribution:
+    namespace_distribution: {}
+    resource_quotas: {}
+    limit_ranges: {}
+    issues: []
+
+# Analysis status
+analysis_status:
+  cluster_overview: false
+  node_analysis: false
+  network_analysis: false
+  storage_analysis: false
+  operator_analysis: false
+  resource_distribution: false
