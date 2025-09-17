@@ -661,9 +661,25 @@ openshift_health_check/
 │   │   └── ansible.cfg                   # Configuração do Ansible
 │   ├── examples/
 │   │   ├── example_config.yml            # Configuração de exemplo
-│   │   └── example_usage.md              # Exemplos de uso
+│   │   ├── example_usage.md              # Exemplos de uso
+│   │   ├── run_health_check_multiple_clusters.sh  # Script para múltiplos clusters
+│   │   ├── multiple_clusters_config.yml  # Configuração para múltiplos clusters
+│   │   ├── multiple_clusters_inventory.yml # Inventário para múltiplos clusters
+│   │   └── group_vars_all.yml            # Variáveis de grupo de exemplo
+│   ├── templates/                        # Templates Jinja2
+│   │   ├── consolidated_health_check_report.j2  # Template consolidado Markdown
+│   │   └── *.html                        # Templates HTML
 │   └── run_health_check.sh               # Script de execução
-├── reports/                              # Diretório de relatórios gerados
+├── reports/                              # Diretório de relatórios organizados
+│   ├── {cluster_name}_{timestamp}/       # Estrutura por execução
+│   │   ├── data_collection/              # Dados coletados
+│   │   ├── architecture_analysis/        # Análise de arquitetura
+│   │   ├── security_analysis/            # Análise de segurança
+│   │   ├── best_practices_analysis/      # Análise de boas práticas
+│   │   ├── resource_optimization/        # Otimização de recursos
+│   │   ├── consolidated/                 # Relatórios consolidados
+│   │   └── html/                         # Relatórios HTML executivos
+│   └── README.md                         # Documentação dos relatórios
 ├── README.md                             # Documentação principal
 ├── ARCHITECTURE.md                       # Este documento
 └── ANALISE_IMPACTO.md                    # Análise de impacto
@@ -705,3 +721,154 @@ roles/role_name/
 - **Tags**: Execução seletiva via tags Ansible
 - **Templates**: Customização de relatórios via templates Jinja2
 - **Filtros**: Filtros de dados via variáveis de configuração
+
+## Nova Estrutura de Relatórios (v1.1.0)
+
+### Organização por Execução e Tipo
+
+A partir da versão 1.1.0, os relatórios são organizados de forma hierárquica para suportar múltiplos clusters e facilitar a gestão de execuções.
+
+#### Estrutura de Diretórios
+
+```
+reports/
+├── {cluster_name}_{timestamp}/
+│   ├── data_collection/              # Dados brutos coletados
+│   │   ├── cluster_info.json
+│   │   ├── nodes.json
+│   │   ├── namespaces.json
+│   │   ├── pods.json
+│   │   ├── services.json
+│   │   ├── deployments.json
+│   │   ├── rbac.json
+│   │   ├── security_configs.json
+│   │   ├── operators.json
+│   │   ├── metrics.json
+│   │   ├── events.json
+│   │   ├── collection_summary.json
+│   │   └── data_collection_report.md
+│   ├── architecture_analysis/        # Análise de arquitetura
+│   │   ├── architecture_analysis.json
+│   │   └── architecture_analysis_report.md
+│   ├── security_analysis/            # Análise de segurança
+│   │   ├── security_analysis.json
+│   │   └── security_analysis_report.md
+│   ├── best_practices_analysis/      # Análise de boas práticas
+│   │   ├── best_practices_analysis.json
+│   │   └── best_practices_analysis_report.md
+│   ├── resource_optimization/        # Otimização de recursos
+│   │   ├── resource_optimization.json
+│   │   └── resource_optimization_report.md
+│   ├── consolidated/                 # Relatórios consolidados
+│   │   └── consolidated_health_check_report.md
+│   └── html/                         # Relatórios HTML executivos
+│       ├── data_collection/
+│       │   └── data_collection_report.html
+│       ├── architecture_analysis/
+│       │   └── architecture_analysis_report.html
+│       ├── security_analysis/
+│       │   └── security_analysis_report.html
+│       ├── best_practices_analysis/
+│       │   └── best_practices_analysis_report.html
+│       ├── resource_optimization/
+│       │   └── resource_optimization_report.html
+│       └── consolidated/
+│           └── consolidated_health_check_report.html
+└── README.md                         # Documentação dos relatórios
+```
+
+#### Benefícios da Nova Estrutura
+
+1. **Organização por Execução**: Cada execução cria uma pasta única identificada por `{cluster_name}_{timestamp}`
+2. **Organização por Tipo**: Relatórios agrupados por categoria (dados, análise, HTML)
+3. **Suporte a Múltiplos Clusters**: Pode executar em vários clusters sem conflito
+4. **Facilita Comparações**: Estrutura permite comparar execuções facilmente
+5. **Gestão de Histórico**: Facilita limpeza e manutenção de relatórios antigos
+6. **Separação de Formatos**: Relatórios Markdown (técnicos) e HTML (executivos) separados
+
+#### Exemplo de Estrutura Real
+
+```
+reports/
+├── production-cluster_20241215_143022/
+├── staging-cluster_20241215_144530/
+├── development-cluster_20241215_150145/
+└── README.md
+```
+
+### Suporte a Múltiplos Clusters
+
+#### Script de Execução em Múltiplos Clusters
+
+O script `run_health_check_multiple_clusters.sh` permite:
+
+- Execução em todos os clusters configurados
+- Execução em cluster específico
+- Modo dry-run para validação
+- Modo verbose para debugging
+- Limpeza automática de relatórios antigos
+- Comparação entre execuções
+
+#### Configuração para Múltiplos Clusters
+
+```yaml
+# inventory/multiple_clusters.yml
+all:
+  children:
+    production:
+      hosts:
+        production-cluster:
+          ansible_host: localhost
+          cluster_type: production
+          environment: production
+    staging:
+      hosts:
+        staging-cluster:
+          ansible_host: localhost
+          cluster_type: staging
+          environment: staging
+    development:
+      hosts:
+        development-cluster:
+          ansible_host: localhost
+          cluster_type: development
+          environment: development
+```
+
+#### Variáveis de Configuração
+
+```yaml
+# group_vars/all.yml
+health_check_settings:
+  timeout: 3600
+  retry_count: 3
+  parallel_execution: false
+  cleanup_old_reports: true
+  max_reports_per_cluster: 10
+  report_retention_days: 30
+```
+
+### Fluxo de Execução Atualizado
+
+1. **Inicialização**: Validação de variáveis e conectividade
+2. **Criação de Estrutura**: Criação de diretórios organizados por execução e tipo
+3. **Coleta de Dados**: Execução do role `data_collector` com saída organizada
+4. **Análise**: Execução dos roles de análise com saída organizada
+5. **Geração de Relatórios**: Execução do role `report_generator` com estrutura organizada
+6. **Consolidação**: Consolidação final de resultados na estrutura organizada
+
+### Migração da Estrutura Antiga
+
+Para migrar da estrutura antiga (v1.0.0) para a nova estrutura (v1.1.0):
+
+1. **Backup**: Faça backup dos relatórios existentes
+2. **Execução**: Execute o playbook com a nova versão
+3. **Validação**: Verifique se os relatórios foram gerados na nova estrutura
+4. **Limpeza**: Remova os relatórios antigos após validação
+
+### Considerações de Performance
+
+- **Espaço em Disco**: A nova estrutura pode usar mais espaço devido à organização
+- **I/O**: Maior número de operações de I/O devido à estrutura de diretórios
+- **Navegação**: Melhor organização facilita navegação e localização de relatórios
+- **Backup**: Estrutura organizada facilita backup seletivo por cluster ou data

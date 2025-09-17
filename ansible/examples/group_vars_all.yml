@@ -1,0 +1,201 @@
+# Exemplo de variáveis de grupo para múltiplos clusters
+# Este arquivo demonstra como configurar as credenciais e configurações
+
+# Configurações globais
+ansible_python_interpreter: /usr/bin/python3
+ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
+# Configurações do health check
+health_check_settings:
+  timeout: 3600
+  retry_count: 3
+  parallel_execution: false
+  cleanup_old_reports: true
+  max_reports_per_cluster: 10
+  report_retention_days: 30
+
+# Configurações de relatórios
+report_settings:
+  generate_html: true
+  generate_markdown: true
+  include_charts: true
+  include_screenshots: false
+  html_theme: "executive"
+  markdown_format: "github"
+
+# Configurações de notificação
+notification_settings:
+  enabled: false
+  webhook_url: ""
+  email_recipients: []
+  slack_channel: "#openshift-alerts"
+  teams_channel: "OpenShift Alerts"
+
+# Configurações de backup
+backup_settings:
+  enabled: true
+  destination: "/backup/openshift-health-check"
+  retention_days: 90
+  compression: true
+  encryption: false
+
+# Configurações de análise
+analysis_settings:
+  # Coleta de dados
+  collect_cluster_info: true
+  collect_nodes: true
+  collect_namespaces: true
+  collect_pods: true
+  collect_services: true
+  collect_deployments: true
+  collect_rbac: true
+  collect_security_configs: true
+  collect_operators: true
+  collect_metrics: true
+  collect_events: true
+  
+  # Análise de arquitetura
+  analyze_cluster_overview: true
+  analyze_node_architecture: true
+  analyze_network_architecture: true
+  analyze_storage_architecture: true
+  analyze_operator_health: true
+  analyze_resource_distribution: true
+  
+  # Análise de segurança
+  analyze_rbac: true
+  analyze_network_security: true
+  analyze_pod_security: true
+  analyze_secrets_management: true
+  analyze_compliance: true
+  
+  # Análise de melhores práticas
+  analyze_resource_management: true
+  analyze_naming_conventions: true
+  analyze_labeling: true
+  analyze_health_checks: true
+  analyze_backup_policies: true
+  analyze_monitoring: true
+  
+  # Análise de otimização de recursos
+  analyze_cpu_utilization: true
+  analyze_memory_utilization: true
+  analyze_storage_utilization: true
+  analyze_cost_optimization: true
+  analyze_node_optimization: true
+  analyze_service_optimization: true
+
+# Configurações de filtros
+filter_settings:
+  namespace_filter: ""
+  label_selector: ""
+  field_selector: ""
+  max_pods_per_namespace: 1000
+  max_events_per_namespace: 1000
+  max_metrics_points: 10000
+
+# Configurações de timeout
+timeout_settings:
+  command_timeout: 300
+  connection_timeout: 30
+  analysis_timeout: 1800
+
+# Configurações de segurança
+security_settings:
+  max_privileged_containers: 0
+  max_root_containers: 0
+  max_host_network_pods: 0
+  max_host_pid_pods: 0
+  max_host_ipc_pods: 0
+  check_excessive_permissions: true
+  check_privileged_service_accounts: true
+  check_cluster_admin_usage: true
+
+# Configurações de melhores práticas
+best_practices_settings:
+  min_quota_coverage: 80
+  min_limit_coverage: 80
+  min_health_check_coverage: 80
+  min_backup_coverage: 60
+  min_monitoring_coverage: 70
+  enforce_naming_conventions: true
+  naming_pattern: "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+  max_name_length: 63
+  required_labels:
+    - "app"
+    - "version"
+    - "component"
+  require_readiness_probe: true
+  require_liveness_probe: true
+
+# Configurações de otimização
+optimization_settings:
+  cpu_utilization_threshold: 70
+  memory_utilization_threshold: 70
+  storage_utilization_threshold: 80
+  node_utilization_threshold: 60
+  enable_cost_analysis: true
+  cost_per_cpu_hour: 0.05
+  cost_per_memory_gb_hour: 0.01
+  cost_per_storage_gb_month: 0.10
+  recommend_node_consolidation: true
+  recommend_service_optimization: true
+  recommend_storage_cleanup: true
+
+# Configurações de arquitetura
+architecture_settings:
+  min_master_nodes: 3
+  min_worker_nodes: 2
+  max_node_cpu_usage: 80
+  max_node_memory_usage: 80
+  max_pod_density_per_node: 100
+  check_network_policies: true
+  check_ingress_controllers: true
+  check_load_balancers: true
+  check_persistent_volumes: true
+  check_storage_classes: true
+  check_volume_snapshots: true
+
+# Configurações de conformidade
+compliance_settings:
+  check_cis_benchmarks: true
+  check_nist_guidelines: true
+  check_pod_security_standards: true
+  check_network_policies: true
+  check_ingress_security: true
+  check_dns_security: true
+
+# Configurações de integração
+integration_settings:
+  prometheus:
+    enabled: false
+    url: "http://prometheus.example.com:9090"
+    metrics_prefix: "openshift_health_check"
+  grafana:
+    enabled: false
+    url: "http://grafana.example.com:3000"
+    dashboard_id: "openshift-health-check"
+  slack:
+    enabled: false
+    webhook_url: "{{ vault_slack_webhook }}"
+    channel: "#openshift-alerts"
+  teams:
+    enabled: false
+    webhook_url: "{{ vault_teams_webhook }}"
+    channel: "OpenShift Alerts"
+
+# Configurações de logging
+logging_settings:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "/var/log/openshift-health-check.log"
+  max_size: "10MB"
+  backup_count: 5
+
+# Configurações de performance
+performance_settings:
+  max_concurrent_analyses: 3
+  analysis_memory_limit: "2GB"
+  analysis_cpu_limit: "1000m"
+  data_collection_memory_limit: "1GB"
+  data_collection_cpu_limit: "500m"

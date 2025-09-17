@@ -1,0 +1,62 @@
+---
+# Default variables for report_generator role
+
+# Output directory for reports
+reports_output_dir: "{{ report_output_path }}"
+
+# Cluster information
+cluster_name: "openshift-cluster.example.com"
+cluster_url: "https://api.openshift-cluster.example.com:6443"
+
+# Report generation settings
+generate_html_reports: true
+generate_markdown_reports: true
+generate_consolidated_report: true
+
+# HTML report settings
+html_report_theme: "executive"
+html_report_include_charts: true
+html_report_include_navigation: true
+
+# Report content settings
+include_detailed_metrics: true
+include_recommendations: true
+include_cost_analysis: true
+include_security_analysis: true
+include_architecture_analysis: true
+include_best_practices_analysis: true
+include_resource_optimization_analysis: true
+
+# File naming conventions
+report_timestamp_format: "%Y%m%d_%H%M%S"
+html_report_suffix: "_executive_report.html"
+markdown_report_suffix: "_report.md"
+
+# Report sections to include
+report_sections:
+  - executive_summary
+  - detailed_analysis
+  - recommendations
+  - cost_analysis
+  - security_analysis
+  - architecture_analysis
+  - best_practices_analysis
+  - resource_optimization_analysis
+  - action_plan
+  - next_steps
+
+# Priority levels for recommendations
+priority_levels:
+  high: "🔴 Alta Prioridade"
+  medium: "🟡 Média Prioridade"
+  low: "🟢 Baixa Prioridade"
+
+# Status indicators
+status_indicators:
+  excellent: "🟢 Excelente"
+  good: "🟡 Bom"
+  warning: "🟠 Atenção"
+  critical: "🔴 Crítico"
+  success: "✅ Sucesso"
+  failure: "❌ Falha"
+  pending: "⏳ Pendente"

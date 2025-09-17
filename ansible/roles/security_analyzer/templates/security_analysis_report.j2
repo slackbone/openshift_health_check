@@ -1,119 +1,119 @@
-# OpenShift Health Check - Security Analysis Report
+# Verificação de Saúde OpenShift - Relatório de Análise de Segurança
 
-## Analysis Summary
+## Resumo da Análise
 
-**Analysis Timestamp:** {{ security_analysis.analysis_timestamp }}  
-**Cluster URL:** {{ security_analysis.cluster_url }}  
-**Overall Security Score:** {{ security_analysis.overall_security_score }}/100  
+**Timestamp da Análise:** {{ security_analysis.analysis_timestamp }}  
+**URL do Cluster:** {{ security_analysis.cluster_url }}  
+**Pontuação Geral de Segurança:** {{ security_analysis.overall_security_score }}/100  
 
-## Analysis Status
+## Status da Análise
 
-| Component | Status |
-|-----------|--------|
-| RBAC Analysis | {{ '✓ Success' if security_analysis_status.rbac_analysis else '✗ Failed' }} |
-| Network Security | {{ '✓ Success' if security_analysis_status.network_security else '✗ Failed' }} |
-| Pod Security | {{ '✓ Success' if security_analysis_status.pod_security else '✗ Failed' }} |
-| Secrets Management | {{ '✓ Success' if security_analysis_status.secrets_management else '✗ Failed' }} |
-| Compliance Analysis | {{ '✓ Success' if security_analysis_status.compliance_analysis else '✗ Failed' }} |
+| Componente | Status |
+|------------|--------|
+| Análise RBAC | {{ '✓ Sucesso' if security_analysis_status.rbac_analysis else '✗ Falhou' }} |
+| Segurança de Rede | {{ '✓ Sucesso' if security_analysis_status.network_security else '✗ Falhou' }} |
+| Segurança de Pods | {{ '✓ Sucesso' if security_analysis_status.pod_security else '✗ Falhou' }} |
+| Gerenciamento de Segredos | {{ '✓ Sucesso' if security_analysis_status.secrets_management else '✗ Falhou' }} |
+| Análise de Conformidade | {{ '✓ Sucesso' if security_analysis_status.compliance_analysis else '✗ Falhou' }} |
 
-## RBAC Analysis
+## Análise RBAC
 
 {% if security_analysis_status.rbac_analysis %}
-- **Total Cluster Roles:** {{ security_analysis.rbac_analysis.cluster_roles.total_cluster_roles }}
-- **Cluster Admin Roles:** {{ security_analysis.rbac_analysis.cluster_roles.cluster_admin_roles }}
-- **System Roles:** {{ security_analysis.rbac_analysis.cluster_roles.system_roles }}
-- **Custom Roles:** {{ security_analysis.rbac_analysis.cluster_roles.custom_roles }}
-- **Total Cluster Role Bindings:** {{ security_analysis.rbac_analysis.cluster_role_bindings.total_bindings }}
-- **Cluster Admin Bindings:** {{ security_analysis.rbac_analysis.cluster_role_bindings.cluster_admin_bindings }}
-- **Total Service Accounts:** {{ security_analysis.rbac_analysis.service_accounts.total_service_accounts }}
+- **Total de Roles do Cluster:** {{ security_analysis.rbac_analysis.cluster_roles.total_cluster_roles }}
+- **Roles de Administrador do Cluster:** {{ security_analysis.rbac_analysis.cluster_roles.cluster_admin_roles }}
+- **Roles do Sistema:** {{ security_analysis.rbac_analysis.cluster_roles.system_roles }}
+- **Roles Personalizados:** {{ security_analysis.rbac_analysis.cluster_roles.custom_roles }}
+- **Total de Vinculações de Roles do Cluster:** {{ security_analysis.rbac_analysis.cluster_role_bindings.total_bindings }}
+- **Vinculações de Administrador do Cluster:** {{ security_analysis.rbac_analysis.cluster_role_bindings.cluster_admin_bindings }}
+- **Total de Contas de Serviço:** {{ security_analysis.rbac_analysis.service_accounts.total_service_accounts }}
 
 {% if security_analysis.rbac_analysis.excessive_permissions | length > 0 %}
-### Excessive Permissions
+### Permissões Excessivas
 {% for permission in security_analysis.rbac_analysis.excessive_permissions %}
 - ⚠️ {{ permission }}
 {% endfor %}
 {% endif %}
 
 {% if security_analysis.rbac_analysis.privileged_accounts | length > 0 %}
-### Privileged Accounts
+### Contas Privilegiadas
 {% for account in security_analysis.rbac_analysis.privileged_accounts %}
 - ⚠️ {{ account }}
 {% endfor %}
 {% endif %}
 
 {% if security_analysis.rbac_analysis.issues | length > 0 %}
-### RBAC Issues
+### Problemas RBAC
 {% for issue in security_analysis.rbac_analysis.issues %}
 - ⚠️ {{ issue }}
 {% endfor %}
 {% endif %}
 {% else %}
-❌ RBAC analysis failed
+❌ Análise RBAC falhou
 {% endif %}
 
-## Pod Security Analysis
+## Análise de Segurança de Pods
 
 {% if security_analysis_status.pod_security %}
-- **Total Pods:** {{ security_analysis.pod_security.privileged_containers + security_analysis.pod_security.root_containers + security_analysis.pod_security.host_network_pods }}
-- **Privileged Containers:** {{ security_analysis.pod_security.privileged_containers }}
-- **Root Containers:** {{ security_analysis.pod_security.root_containers }}
-- **Host Network Pods:** {{ security_analysis.pod_security.host_network_pods }}
-- **Host PID Pods:** {{ security_analysis.pod_security.host_pid_pods }}
-- **Host IPC Pods:** {{ security_analysis.pod_security.host_ipc_pods }}
-- **Security Context Constraints:** {{ security_analysis.pod_security.security_context_constraints.total_sccs }}
-- **Pod Security Policies:** {{ security_analysis.pod_security.pod_security_policies }}
+- **Total de Pods:** {{ security_analysis.pod_security.privileged_containers + security_analysis.pod_security.root_containers + security_analysis.pod_security.host_network_pods }}
+- **Containers Privilegiados:** {{ security_analysis.pod_security.privileged_containers }}
+- **Containers Root:** {{ security_analysis.pod_security.root_containers }}
+- **Pods com Rede do Host:** {{ security_analysis.pod_security.host_network_pods }}
+- **Pods com PID do Host:** {{ security_analysis.pod_security.host_pid_pods }}
+- **Pods com IPC do Host:** {{ security_analysis.pod_security.host_ipc_pods }}
+- **Restrições de Contexto de Segurança:** {{ security_analysis.pod_security.security_context_constraints.total_sccs }}
+- **Políticas de Segurança de Pods:** {{ security_analysis.pod_security.pod_security_policies }}
 
 {% if security_analysis.pod_security.pod_security_issues | length > 0 %}
-### Pod Security Issues
+### Problemas de Segurança de Pods
 {% for issue in security_analysis.pod_security.pod_security_issues %}
 - ⚠️ {{ issue }}
 {% endfor %}
 {% endif %}
 {% else %}
-❌ Pod security analysis failed
+❌ Análise de segurança de pods falhou
 {% endif %}
 
-## Security Recommendations
+## Recomendações de Segurança
 
-### High Priority
+### Alta Prioridade
 {% if security_analysis_status.rbac_analysis and security_analysis.rbac_analysis.cluster_role_bindings.cluster_admin_bindings > 3 %}
-- Reduce the use of cluster-admin role to minimum necessary
+- Reduzir o uso do role cluster-admin ao mínimo necessário
 {% endif %}
 {% if security_analysis_status.pod_security and security_analysis.pod_security.privileged_containers > 0 %}
-- Remove privileged containers or implement proper security contexts
+- Remover containers privilegiados ou implementar contextos de segurança adequados
 {% endif %}
 {% if security_analysis_status.pod_security and security_analysis.pod_security.root_containers > 0 %}
-- Avoid running containers as root user
+- Evitar executar containers como usuário root
 {% endif %}
 
-### Medium Priority
+### Média Prioridade
 {% if security_analysis_status.rbac_analysis and security_analysis.rbac_analysis.excessive_permissions | length > 0 %}
-- Review and minimize excessive permissions
+- Revisar e minimizar permissões excessivas
 {% endif %}
 {% if security_analysis_status.pod_security and security_analysis.pod_security.host_network_pods > 0 %}
-- Avoid using host network for pods when possible
+- Evitar usar rede do host para pods quando possível
 {% endif %}
 
-### Low Priority
+### Baixa Prioridade
 {% if security_analysis_status.rbac_analysis and security_analysis.rbac_analysis.privileged_accounts | length > 0 %}
-- Review service accounts with elevated privileges
+- Revisar contas de serviço com privilégios elevados
 {% endif %}
 
-## Security Score Breakdown
+## Detalhamento da Pontuação de Segurança
 
-**Overall Score:** {{ security_analysis.overall_security_score }}/100
+**Pontuação Geral:** {{ security_analysis.overall_security_score }}/100
 
 {% if security_analysis.overall_security_score >= 90 %}
-🟢 **Excellent** - Cluster security is well configured
+🟢 **Excelente** - A segurança do cluster está bem configurada
 {% elif security_analysis.overall_security_score >= 70 %}
-🟡 **Good** - Some security improvements recommended
+🟡 **Bom** - Algumas melhorias de segurança recomendadas
 {% elif security_analysis.overall_security_score >= 50 %}
-🟠 **Fair** - Several security issues need attention
+🟠 **Regular** - Várias questões de segurança precisam de atenção
 {% else %}
-🔴 **Poor** - Significant security improvements required
+🔴 **Ruim** - Melhorias significativas de segurança necessárias
 {% endif %}
 
-## Analysis Statistics
+## Estatísticas da Análise
 
 {% set success_count = 0 %}
 {% set total_count = 0 %}
@@ -124,17 +124,17 @@
 {% endif %}
 {% endfor %}
 
-**Total Analysis Components:** {{ total_count }}  
-**Successful Analyses:** {{ success_count }}  
-**Failed Analyses:** {{ total_count - success_count }}  
-**Success Rate:** {{ ((success_count / total_count) * 100) | round(2) }}%  
+**Total de Componentes de Análise:** {{ total_count }}  
+**Análises Bem-sucedidas:** {{ success_count }}  
+**Análises Falharam:** {{ total_count - success_count }}  
+**Taxa de Sucesso:** {{ ((success_count / total_count) * 100) | round(2) }}%  
 
-## Notes
+## Notas
 
 {% if success_count < total_count %}
-⚠️ **Warning:** Some security analysis tasks failed. The analysis may be incomplete.
+⚠️ **Aviso:** Algumas tarefas de análise de segurança falharam. A análise pode estar incompleta.
 {% else %}
-✅ **Success:** All security analysis tasks completed successfully.
+✅ **Sucesso:** Todas as tarefas de análise de segurança foram concluídas com sucesso.
 {% endif %}
 
-This report was generated automatically by the OpenShift Health Check Ansible playbook.
+Este relatório foi gerado automaticamente pelo playbook de Verificação de Saúde OpenShift do Ansible.

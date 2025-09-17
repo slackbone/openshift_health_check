@@ -1,0 +1,36 @@
+---
+# Best Practices Analyzer Role Default Variables
+
+# Analysis settings
+analyze_resource_management: true
+analyze_naming_conventions: true
+analyze_labeling: true
+analyze_health_checks: true
+analyze_backup_policies: true
+analyze_monitoring: true
+
+# Output settings
+best_practices_output_dir: "{{ report_output_path }}/best_practices_analysis"
+analysis_format: "json"
+
+# Best practices thresholds
+min_quota_coverage: 80
+min_limit_coverage: 80
+min_health_check_coverage: 80
+min_backup_coverage: 60
+min_monitoring_coverage: 70
+
+# Naming convention rules
+enforce_naming_conventions: true
+naming_pattern: "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+max_name_length: 63
+
+# Labeling requirements
+required_labels:
+  - "app"
+  - "version"
+  - "component"
+
+# Health check requirements
+require_readiness_probe: true
+require_liveness_probe: true

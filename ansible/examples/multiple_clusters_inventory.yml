@@ -1,0 +1,89 @@
+# Exemplo de inventário para múltiplos clusters
+# Este arquivo demonstra como configurar o inventário para diferentes ambientes
+
+all:
+  children:
+    # Grupo de clusters de produção
+    production:
+      hosts:
+        production-cluster:
+          ansible_host: localhost
+          ansible_connection: local
+          cluster_type: production
+          environment: production
+          priority: high
+          
+    # Grupo de clusters de staging
+    staging:
+      hosts:
+        staging-cluster:
+          ansible_host: localhost
+          ansible_connection: local
+          cluster_type: staging
+          environment: staging
+          priority: medium
+          
+    # Grupo de clusters de desenvolvimento
+    development:
+      hosts:
+        development-cluster:
+          ansible_host: localhost
+          ansible_connection: local
+          cluster_type: development
+          environment: development
+          priority: low
+          
+        lab-cluster:
+          ansible_host: localhost
+          ansible_connection: local
+          cluster_type: development
+          environment: lab
+          priority: low
+          
+    # Grupo de clusters críticos (produção + staging)
+    critical:
+      children:
+        production:
+        staging:
+          
+    # Grupo de clusters não-críticos (desenvolvimento + lab)
+    non-critical:
+      children:
+        development:
+        
+    # Grupo de todos os clusters
+    all-clusters:
+      children:
+        production:
+        staging:
+        development:
+
+  vars:
+    # Variáveis globais
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    
+    # Configurações globais do health check
+    health_check_settings:
+      timeout: 3600
+      retry_count: 3
+      parallel_execution: false
+      
+    # Configurações de relatórios
+    report_settings:
+      generate_html: true
+      generate_markdown: true
+      include_charts: true
+      include_screenshots: false
+      
+    # Configurações de notificação
+    notification_settings:
+      enabled: false
+      webhook_url: ""
+      email_recipients: []
+      
+    # Configurações de backup
+    backup_settings:
+      enabled: true
+      destination: "/backup/openshift-health-check"
+      retention_days: 90

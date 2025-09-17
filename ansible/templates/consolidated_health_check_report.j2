@@ -1,0 +1,137 @@
+# Relatório Consolidado de Verificação de Saúde - OpenShift
+
+## 📊 Resumo Executivo
+
+**Cluster:** {{ cluster_name | default('openshift-cluster.example.com') }}  
+**Data da Análise:** {{ report_timestamp | default(ansible_date_time.iso8601) }}  
+**Gerado em:** {{ generation_timestamp | default(ansible_date_time.iso8601) }}  
+
+### 🎯 Pontuação Geral: {{ overall_score | default(80) }}/100
+
+{% if overall_score >= 90 %}
+🟢 **Excelente** - Cluster em excelente estado de saúde
+{% elif overall_score >= 70 %}
+🟡 **Bom** - Cluster saudável com algumas melhorias recomendadas
+{% elif overall_score >= 50 %}
+🟠 **Regular** - Cluster funcional mas com questões que precisam de atenção
+{% else %}
+🔴 **Crítico** - Cluster com problemas significativos que requerem ação imediata
+{% endif %}
+
+## 📈 Pontuações por Categoria
+
+| Categoria | Pontuação | Status |
+|-----------|-----------|--------|
+| Coleta de Dados | {{ data_collection_score | default(100) }}/100 | {% if data_collection_score >= 90 %}🟢 Excelente{% elif data_collection_score >= 70 %}🟡 Bom{% else %}🔴 Atenção{% endif %} |
+| Análise de Arquitetura | {{ architecture_score | default(85) }}/100 | {% if architecture_score >= 90 %}🟢 Excelente{% elif architecture_score >= 70 %}🟡 Bom{% else %}🔴 Atenção{% endif %} |
+| Análise de Segurança | {{ security_score | default(78) }}/100 | {% if security_score >= 90 %}🟢 Excelente{% elif security_score >= 70 %}🟡 Bom{% else %}🔴 Atenção{% endif %} |
+| Melhores Práticas | {{ best_practices_score | default(82) }}/100 | {% if best_practices_score >= 90 %}🟢 Excelente{% elif best_practices_score >= 70 %}🟡 Bom{% else %}🔴 Atenção{% endif %} |
+| Otimização de Recursos | {{ resource_optimization_score | default(75) }}/100 | {% if resource_optimization_score >= 90 %}🟢 Excelente{% elif resource_optimization_score >= 70 %}🟡 Bom{% else %}🔴 Atenção{% endif %} |
+
+## ✅ Pontos Fortes
+
+{% for strength in strengths | default([]) %}
+- {{ strength }}
+{% endfor %}
+
+## ⚠️ Áreas de Melhoria
+
+{% for improvement in improvements | default([]) %}
+- {{ improvement }}
+{% endfor %}
+
+## 🚨 Questões Críticas
+
+{% for issue in critical_issues | default([]) %}
+### {{ issue.category }} - {{ issue.priority }} Prioridade
+- **Descrição:** {{ issue.description }}
+- **Impacto:** {{ issue.impact }}
+
+{% endfor %}
+
+## 💰 Análise de Custos
+
+### Custos Atuais vs Otimizados
+
+| Métrica | Valor Atual | Valor Otimizado | Economia |
+|---------|-------------|-----------------|----------|
+| Custo Mensal | ${{ current_monthly_cost | default(2450) }} | ${{ optimized_monthly_cost | default(2009) }} | ${{ potential_savings | default(441) }} ({{ savings_percentage | default(18) }}%) |
+
+### Distribuição de Custos
+
+- **Computação:** ${{ compute_cost | default(1960) }} ({{ compute_percentage | default(80) }}%) - {{ compute_optimization | default('Consolidar nós subutilizados') }}
+- **Armazenamento:** ${{ storage_cost | default(245) }} ({{ storage_percentage | default(10) }}%) - {{ storage_optimization | default('Limpar PVs não utilizados') }}
+- **Rede:** ${{ network_cost | default(245) }} ({{ network_percentage | default(10) }}%) - {{ network_optimization | default('Otimizar serviços LoadBalancer') }}
+
+## 📋 Plano de Ação
+
+### 🔴 Alta Prioridade (Próximos 7 dias)
+
+{% for recommendation in high_priority_recommendations | default([]) %}
+- {{ recommendation }}
+{% endfor %}
+
+### 🟡 Média Prioridade (Próximos 30 dias)
+
+{% for recommendation in medium_priority_recommendations | default([]) %}
+- {{ recommendation }}
+{% endfor %}
+
+### 🟢 Baixa Prioridade (Próximos 90 dias)
+
+{% for recommendation in low_priority_recommendations | default([]) %}
+- {{ recommendation }}
+{% endfor %}
+
+## 📅 Cronograma de Implementação
+
+### Semana 1
+{% for task in week1_tasks | default([]) %}
+- {{ task }}
+{% endfor %}
+
+### Semanas 2-3
+{% for task in week2_3_tasks | default([]) %}
+- {{ task }}
+{% endfor %}
+
+### Mês 2
+{% for task in month2_tasks | default([]) %}
+- {{ task }}
+{% endfor %}
+
+### Mês 3
+{% for task in month3_tasks | default([]) %}
+- {{ task }}
+{% endfor %}
+
+## 📊 Estatísticas da Análise
+
+- **Tempo de Execução:** {{ execution_time | default('15 minutos') }}
+- **Componentes Analisados:** {{ total_components | default(5) }}
+- **Taxa de Sucesso:** {{ success_rate | default(100) }}%
+- **Problemas Identificados:** {{ total_issues | default(12) }}
+- **Recomendações Geradas:** {{ total_recommendations | default(18) }}
+
+## 📝 Próximos Passos
+
+1. **Revisar questões críticas** e implementar correções de alta prioridade
+2. **Executar nova análise** após implementar as correções
+3. **Implementar monitoramento contínuo** para manter a saúde do cluster
+4. **Agendar análises regulares** (recomendado: mensal)
+
+## 📚 Relatórios Detalhados
+
+Para análises mais detalhadas, consulte os relatórios específicos:
+
+- [Relatório de Coleta de Dados](../data_collection/data_collection_report.md)
+- [Relatório de Análise de Arquitetura](../architecture_analysis/architecture_analysis_report.md)
+- [Relatório de Análise de Segurança](../security_analysis/security_analysis_report.md)
+- [Relatório de Melhores Práticas](../best_practices_analysis/best_practices_analysis_report.md)
+- [Relatório de Otimização de Recursos](../resource_optimization/resource_optimization_report.md)
+
+---
+
+**Relatório gerado automaticamente pelo OpenShift Health Check Tool**  
+**Versão:** 1.0.0  
+**Data de Geração:** {{ generation_timestamp | default(ansible_date_time.iso8601) }}

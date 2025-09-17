@@ -1,0 +1,160 @@
+# Exemplo de configuração para múltiplos clusters
+# Este arquivo demonstra como configurar o health check para diferentes ambientes
+
+# Configurações globais
+global_settings:
+  # Diretório base para relatórios
+  reports_base_dir: "reports"
+  
+  # Configurações de limpeza automática
+  cleanup_settings:
+    keep_reports_days: 30
+    max_reports_per_cluster: 10
+  
+  # Configurações de notificação (opcional)
+  notifications:
+    enabled: false
+    webhook_url: ""
+    email_recipients: []
+
+# Configurações por cluster
+clusters:
+  # Cluster de Produção
+  production-cluster:
+    cluster_url: "https://api.production.example.com:6443"
+    cluster_token: "{{ vault_production_token }}"
+    cluster_kubeconfig: "/path/to/production/kubeconfig"
+    
+    # Configurações específicas do cluster
+    settings:
+      collect_metrics: true
+      collect_events: true
+      analyze_cost_optimization: true
+      generate_html_reports: true
+      
+    # Filtros específicos
+    filters:
+      namespace_filter: "production,monitoring"
+      label_selector: "environment=production"
+      
+    # Agendamento (opcional)
+    schedule:
+      enabled: true
+      cron: "0 2 * * *"  # Diariamente às 2h
+      
+  # Cluster de Staging
+  staging-cluster:
+    cluster_url: "https://api.staging.example.com:6443"
+    cluster_token: "{{ vault_staging_token }}"
+    cluster_kubeconfig: "/path/to/staging/kubeconfig"
+    
+    settings:
+      collect_metrics: true
+      collect_events: false
+      analyze_cost_optimization: false
+      generate_html_reports: true
+      
+    filters:
+      namespace_filter: "staging,testing"
+      label_selector: "environment=staging"
+      
+    schedule:
+      enabled: true
+      cron: "0 4 * * 1"  # Semanalmente às 4h de segunda-feira
+      
+  # Cluster de Desenvolvimento
+  development-cluster:
+    cluster_url: "https://api.dev.example.com:6443"
+    cluster_token: "{{ vault_dev_token }}"
+    cluster_kubeconfig: "/path/to/dev/kubeconfig"
+    
+    settings:
+      collect_metrics: false
+      collect_events: false
+      analyze_cost_optimization: false
+      generate_html_reports: false
+      
+    filters:
+      namespace_filter: "development,testing"
+      label_selector: "environment=development"
+      
+    schedule:
+      enabled: false
+      
+  # Cluster de Laboratório
+  lab-cluster:
+    cluster_url: "https://api.lab.example.com:6443"
+    cluster_token: "{{ vault_lab_token }}"
+    cluster_kubeconfig: "/path/to/lab/kubeconfig"
+    
+    settings:
+      collect_metrics: false
+      collect_events: false
+      analyze_cost_optimization: false
+      generate_html_reports: false
+      
+    filters:
+      namespace_filter: "lab,experimental"
+      label_selector: "environment=lab"
+      
+    schedule:
+      enabled: false
+
+# Configurações de alertas por cluster
+alerts:
+  production-cluster:
+    critical_score_threshold: 70
+    warning_score_threshold: 85
+    notify_on_critical: true
+    notify_on_warning: false
+    
+  staging-cluster:
+    critical_score_threshold: 60
+    warning_score_threshold: 80
+    notify_on_critical: true
+    notify_on_warning: true
+    
+  development-cluster:
+    critical_score_threshold: 50
+    warning_score_threshold: 70
+    notify_on_critical: false
+    notify_on_warning: false
+    
+  lab-cluster:
+    critical_score_threshold: 40
+    warning_score_threshold: 60
+    notify_on_critical: false
+    notify_on_warning: false
+
+# Configurações de backup dos relatórios
+backup:
+  enabled: true
+  destination: "/backup/openshift-health-check"
+  retention_days: 90
+  compression: true
+  
+# Configurações de integração
+integrations:
+  # Integração com Prometheus (opcional)
+  prometheus:
+    enabled: false
+    url: "http://prometheus.example.com:9090"
+    metrics_prefix: "openshift_health_check"
+    
+  # Integração com Grafana (opcional)
+  grafana:
+    enabled: false
+    url: "http://grafana.example.com:3000"
+    dashboard_id: "openshift-health-check"
+    
+  # Integração com Slack (opcional)
+  slack:
+    enabled: false
+    webhook_url: "{{ vault_slack_webhook }}"
+    channel: "#openshift-alerts"
+    
+  # Integração com Teams (opcional)
+  teams:
+    enabled: false
+    webhook_url: "{{ vault_teams_webhook }}"
+    channel: "OpenShift Alerts"

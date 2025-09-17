@@ -12,6 +12,9 @@
     # Configurações de saída dos relatórios
     output_dir: "{{ playbook_dir }}/../reports"
     timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
+    cluster_name: "{{ cluster_name | default('openshift-cluster') }}"
+    execution_id: "{{ cluster_name }}_{{ timestamp }}"
+    reports_output_dir: "{{ output_dir }}/{{ execution_id }}"
     
   pre_tasks:
     # Validação das variáveis obrigatórias
@@ -24,17 +27,46 @@
         - "{{ openshift_cluster_url }}"
         - "{{ openshift_token }}"
         
-    # Criação do diretório de saída
-    - name: Criar diretório de saída
+    # Criação da estrutura de diretórios organizada
+    - name: Criar diretório principal da execução
       file:
-        path: "{{ output_dir }}/{{ timestamp }}"
+        path: "{{ reports_output_dir }}"
         state: directory
         mode: '0755'
+        
+    # Criação dos diretórios por tipo de relatório
+    - name: Criar diretórios por tipo de relatório
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ reports_output_dir }}/data_collection"
+        - "{{ reports_output_dir }}/architecture_analysis"
+        - "{{ reports_output_dir }}/security_analysis"
+        - "{{ reports_output_dir }}/best_practices_analysis"
+        - "{{ reports_output_dir }}/resource_optimization"
+        - "{{ reports_output_dir }}/consolidated"
+        - "{{ reports_output_dir }}/html"
+        
+    # Criação dos diretórios HTML por tipo
+    - name: Criar diretórios HTML por tipo
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ reports_output_dir }}/html/data_collection"
+        - "{{ reports_output_dir }}/html/architecture_analysis"
+        - "{{ reports_output_dir }}/html/security_analysis"
+        - "{{ reports_output_dir }}/html/best_practices_analysis"
+        - "{{ reports_output_dir }}/html/resource_optimization"
+        - "{{ reports_output_dir }}/html/consolidated"
         
     # Definir caminho de saída como fact
     - name: Definir caminho de saída dos relatórios
       set_fact:
-        report_output_path: "{{ output_dir }}/{{ timestamp }}"
+        report_output_path: "{{ reports_output_dir }}"
 
   roles:
     # Role para coleta de dados do cluster
@@ -68,11 +100,26 @@
         msg: |
           Avaliação de Saúde do OpenShift concluída com sucesso!
           
+          Cluster: {{ cluster_name }}
+          Execução: {{ execution_id }}
           Relatórios gerados em: {{ report_output_path }}
           
-          Relatórios disponíveis:
-          - Relatório HTML: {{ report_output_path }}/relatorio_avaliacao_openshift.html
-          - Relatório JSON: {{ report_output_path }}/relatorio_avaliacao_openshift.json
-          - Relatório Markdown: {{ report_output_path }}/relatorio_avaliacao_openshift.md
+          Estrutura de Relatórios:
           
-          Para visualizar o relatório HTML, abra: file://{{ report_output_path }}/relatorio_avaliacao_openshift.html
+          📊 Relatórios HTML (Executivos):
+          - Relatório Consolidado: {{ report_output_path }}/html/consolidated/consolidated_health_check_report.html
+          - Coleta de Dados: {{ report_output_path }}/html/data_collection/data_collection_report.html
+          - Análise de Arquitetura: {{ report_output_path }}/html/architecture_analysis/architecture_analysis_report.html
+          - Análise de Segurança: {{ report_output_path }}/html/security_analysis/security_analysis_report.html
+          - Melhores Práticas: {{ report_output_path }}/html/best_practices_analysis/best_practices_analysis_report.html
+          - Otimização de Recursos: {{ report_output_path }}/html/resource_optimization/resource_optimization_report.html
+          
+          📋 Relatórios Markdown (Detalhados):
+          - Coleta de Dados: {{ report_output_path }}/data_collection/data_collection_report.md
+          - Análise de Arquitetura: {{ report_output_path }}/architecture_analysis/architecture_analysis_report.md
+          - Análise de Segurança: {{ report_output_path }}/security_analysis/security_analysis_report.md
+          - Melhores Práticas: {{ report_output_path }}/best_practices_analysis/best_practices_analysis_report.md
+          - Otimização de Recursos: {{ report_output_path }}/resource_optimization/resource_optimization_report.md
+          - Relatório Consolidado: {{ report_output_path }}/consolidated/consolidated_health_check_report.md
+          
+          Para visualizar o relatório HTML executivo, abra: file://{{ report_output_path }}/html/consolidated/consolidated_health_check_report.html

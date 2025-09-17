@@ -1,0 +1,31 @@
+---
+# Resource Optimizer Role Default Variables
+
+# Analysis settings
+analyze_cpu_utilization: true
+analyze_memory_utilization: true
+analyze_storage_utilization: true
+analyze_cost_optimization: true
+analyze_node_optimization: true
+analyze_service_optimization: true
+
+# Output settings
+resource_optimization_output_dir: "{{ report_output_path }}/resource_optimization"
+analysis_format: "json"
+
+# Optimization thresholds
+cpu_utilization_threshold: 70
+memory_utilization_threshold: 70
+storage_utilization_threshold: 80
+node_utilization_threshold: 60
+
+# Cost analysis settings
+enable_cost_analysis: true
+cost_per_cpu_hour: 0.05
+cost_per_memory_gb_hour: 0.01
+cost_per_storage_gb_month: 0.10
+
+# Optimization recommendations
+recommend_node_consolidation: true
+recommend_service_optimization: true
+recommend_storage_cleanup: true

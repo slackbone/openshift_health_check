@@ -130,13 +130,31 @@ cd ansible
 # Execução completa
 ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
   -e cluster_url="https://api.cluster.example.com:6443" \
-  -e cluster_token="sha256~your-token-here"
+  -e cluster_token="sha256~your-token-here" \
+  -e cluster_name="production-cluster"
 
 # Execução com tags específicas
 ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
   -e cluster_url="https://api.cluster.example.com:6443" \
   -e cluster_token="sha256~your-token-here" \
+  -e cluster_name="production-cluster" \
   --tags "security,architecture"
+```
+
+### Método 3: Execução em Múltiplos Clusters
+
+```bash
+# Executar em todos os clusters configurados
+./examples/run_health_check_multiple_clusters.sh
+
+# Executar em cluster específico
+./examples/run_health_check_multiple_clusters.sh -c production-cluster
+
+# Executar em modo dry-run
+./examples/run_health_check_multiple_clusters.sh -d
+
+# Listar clusters disponíveis
+./examples/run_health_check_multiple_clusters.sh -l
 ```
 
 ### Tags Disponíveis
@@ -196,56 +214,142 @@ all:
 
 ## Estrutura de Saída
 
-Os relatórios são gerados no diretório `reports/` com a seguinte estrutura:
+Os relatórios são organizados por execução e tipo no diretório `reports/` com a seguinte estrutura:
 
 ```
 reports/
-└── 20241201T120000/
-    ├── raw_data/
-    │   ├── cluster_info.json
-    │   ├── nodes.json
-    │   ├── namespaces.json
-    │   └── ...
-    ├── architecture_analysis/
-    │   ├── architecture_analysis.json
-    │   └── architecture_analysis_report.md
-    ├── security_analysis/
-    │   ├── security_analysis.json
-    │   └── security_analysis_report.md
-    └── openshift_assessment_report.html
+├── {cluster_name}_{timestamp}/
+│   ├── data_collection/
+│   │   ├── cluster_info.json
+│   │   ├── nodes.json
+│   │   ├── namespaces.json
+│   │   ├── pods.json
+│   │   ├── services.json
+│   │   ├── deployments.json
+│   │   ├── rbac.json
+│   │   ├── security_configs.json
+│   │   ├── operators.json
+│   │   ├── metrics.json
+│   │   ├── events.json
+│   │   ├── collection_summary.json
+│   │   └── data_collection_report.md
+│   ├── architecture_analysis/
+│   │   ├── architecture_analysis.json
+│   │   └── architecture_analysis_report.md
+│   ├── security_analysis/
+│   │   ├── security_analysis.json
+│   │   └── security_analysis_report.md
+│   ├── best_practices_analysis/
+│   │   ├── best_practices_analysis.json
+│   │   └── best_practices_analysis_report.md
+│   ├── resource_optimization/
+│   │   ├── resource_optimization.json
+│   │   └── resource_optimization_report.md
+│   ├── consolidated/
+│   │   └── consolidated_health_check_report.md
+│   └── html/
+│       ├── data_collection/
+│       │   └── data_collection_report.html
+│       ├── architecture_analysis/
+│       │   └── architecture_analysis_report.html
+│       ├── security_analysis/
+│       │   └── security_analysis_report.html
+│       ├── best_practices_analysis/
+│       │   └── best_practices_analysis_report.html
+│       ├── resource_optimization/
+│       │   └── resource_optimization_report.html
+│       └── consolidated/
+│           └── consolidated_health_check_report.html
+└── README.md
+```
+
+### Exemplo de Estrutura Real
+
+```
+reports/
+├── production-cluster_20241215_143022/
+├── staging-cluster_20241215_144530/
+├── development-cluster_20241215_150145/
+└── README.md
 ```
 
 ## Exemplos de Uso
 
 ### 1. Análise Completa
 ```bash
+# Usando script de execução
 ./ansible/run_health_check.sh \
   -u https://api.cluster.example.com:6443 \
   -t sha256~your-token-here
+
+# Usando Ansible diretamente
+ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
+  -e cluster_url="https://api.cluster.example.com:6443" \
+  -e cluster_token="sha256~your-token-here" \
+  -e cluster_name="production-cluster"
 ```
 
 ### 2. Análise de Segurança Apenas
 ```bash
+# Usando script de execução
 ./ansible/run_health_check.sh \
   -u https://api.cluster.example.com:6443 \
   -t sha256~your-token-here \
   --tags security
+
+# Usando Ansible diretamente
+ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
+  -e cluster_url="https://api.cluster.example.com:6443" \
+  -e cluster_token="sha256~your-token-here" \
+  -e cluster_name="production-cluster" \
+  --tags "seguranca"
 ```
 
 ### 3. Análise de Arquitetura e Recursos
 ```bash
+# Usando script de execução
 ./ansible/run_health_check.sh \
   -u https://api.cluster.example.com:6443 \
   -t sha256~your-token-here \
   --tags "architecture,resources"
+
+# Usando Ansible diretamente
+ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
+  -e cluster_url="https://api.cluster.example.com:6443" \
+  -e cluster_token="sha256~your-token-here" \
+  -e cluster_name="production-cluster" \
+  --tags "arquitetura,recursos"
 ```
 
 ### 4. Modo de Verificação
 ```bash
+# Usando script de execução
 ./ansible/run_health_check.sh \
   -u https://api.cluster.example.com:6443 \
   -t sha256~your-token-here \
   --check
+
+# Usando Ansible diretamente
+ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
+  -e cluster_url="https://api.cluster.example.com:6443" \
+  -e cluster_token="sha256~your-token-here" \
+  -e cluster_name="production-cluster" \
+  --check
+```
+
+### 5. Execução em Múltiplos Clusters
+```bash
+# Executar em todos os clusters configurados
+./examples/run_health_check_multiple_clusters.sh
+
+# Executar em cluster específico
+./examples/run_health_check_multiple_clusters.sh -c production-cluster
+
+# Executar em modo dry-run
+./examples/run_health_check_multiple_clusters.sh -d
+
+# Executar com verbose
+./examples/run_health_check_multiple_clusters.sh -c production-cluster -v
 ```
 
 ## Solução de Problemas
@@ -280,8 +384,25 @@ reports/
 
 Os logs são salvos em:
 - `ansible/logs/ansible.log`: Logs do Ansible
-- `reports/*/raw_data/`: Dados coletados
-- `reports/*/collection_summary.json`: Resumo da coleta
+- `reports/{cluster_name}_{timestamp}/data_collection/`: Dados coletados
+- `reports/{cluster_name}_{timestamp}/data_collection/collection_summary.json`: Resumo da coleta
+
+### Navegação pelos Relatórios
+
+```bash
+# Encontrar a execução mais recente
+ls -t reports/ | head -1
+
+# Acessar relatório consolidado HTML (recomendado para executivos)
+open reports/{cluster_name}_{timestamp}/html/consolidated/consolidated_health_check_report.html
+
+# Acessar relatório consolidado Markdown (recomendado para técnicos)
+cat reports/{cluster_name}_{timestamp}/consolidated/consolidated_health_check_report.md
+
+# Comparar execuções
+diff reports/production-cluster_20241215_143022/consolidated/consolidated_health_check_report.md \
+      reports/production-cluster_20241214_143022/consolidated/consolidated_health_check_report.md
+```
 
 ## Contribuição
 
@@ -326,8 +447,19 @@ Para suporte e dúvidas:
 - **[Análise de Impacto](ANALISE_IMPACTO.md)**: Documento detalhado sobre o impacto da execução do playbook em ambientes de produção
 - **[Arquitetura](ARCHITECTURE.md)**: Documentação técnica da arquitetura da ferramenta
 - **[Exemplos de Uso](ansible/examples/)**: Exemplos práticos de configuração e uso
+- **[Changelog](CHANGELOG.md)**: Histórico de mudanças e versões
 
 ## Changelog
+
+### v1.1.0
+- **Nova estrutura de relatórios organizados por execução e tipo**
+- Suporte a múltiplos clusters simultâneos
+- Script para execução em múltiplos clusters
+- Relatórios HTML e Markdown organizados separadamente
+- Estrutura de diretórios por cluster e timestamp
+- Facilita comparação entre execuções
+- Limpeza automática de relatórios antigos
+- Documentação atualizada com novos exemplos
 
 ### v1.0.0
 - Implementação inicial em Ansible

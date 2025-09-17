@@ -1,0 +1,32 @@
+---
+galaxy_info:
+  author: OpenShift Health Check Team
+  description: Role for generating HTML and Markdown reports from OpenShift health check data
+  company: OpenShift Health Check Project
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: EL
+      versions:
+        - 7
+        - 8
+        - 9
+    - name: Ubuntu
+      versions:
+        - 18.04
+        - 20.04
+        - 22.04
+  galaxy_tags:
+    - openshift
+    - kubernetes
+    - reporting
+    - html
+    - markdown
+    - health-check
+
+dependencies:
+  - role: data_collector
+  - role: architecture_analyzer
+  - role: security_analyzer
+  - role: best_practices_analyzer
+  - role: resource_optimizer

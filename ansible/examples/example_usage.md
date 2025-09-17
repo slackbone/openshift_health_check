@@ -2,6 +2,8 @@
 
 Este documento fornece exemplos práticos de como usar a ferramenta OpenShift Health Check.
 
+> **📢 Atualização v1.1.0**: Este documento contém exemplos da versão anterior. Para exemplos atualizados com a nova estrutura de relatórios organizados por execução e tipo, consulte [example_usage_updated.md](example_usage_updated.md).
+
 ## Exemplos Básicos
 
 ### 1. Execução Completa

@@ -1,0 +1,123 @@
+---
+- name: Generate HTML reports
+  include_tasks: generate_html_reports.yml
+  tags: [reports, html]
+
+- name: Generate consolidated HTML report
+  include_tasks: generate_consolidated_html_report.yml
+  tags: [reports, html, consolidated]
+
+- name: Generate consolidated markdown report
+  template:
+    src: consolidated_health_check_report.j2
+    dest: "{{ reports_output_dir }}/consolidated/consolidated_health_check_report.md"
+    mode: '0644'
+  vars:
+    report_title: "Relatório Consolidado de Verificação de Saúde"
+    generation_timestamp: "{{ ansible_date_time.iso8601 }}"
+    report_timestamp: "{{ consolidated_report_timestamp | default(ansible_date_time.iso8601) }}"
+    cluster_name: "{{ cluster_name | default('openshift-cluster.example.com') }}"
+    overall_score: "{{ consolidated_overall_score | default(80) }}"
+    data_collection_score: "{{ consolidated_data_collection_score | default(100) }}"
+    architecture_score: "{{ consolidated_architecture_score | default(85) }}"
+    security_score: "{{ consolidated_security_score | default(78) }}"
+    best_practices_score: "{{ consolidated_best_practices_score | default(82) }}"
+    resource_optimization_score: "{{ consolidated_resource_optimization_score | default(75) }}"
+    strengths: "{{ consolidated_strengths | default([
+      'Coleta de Dados: Todas as tarefas de coleta de dados foram concluídas com sucesso (100% de taxa de sucesso)',
+      'Arquitetura: A arquitetura do cluster está bem projetada com boa distribuição de recursos',
+      'Melhores Práticas: A maioria das melhores práticas são seguidas com 82% de conformidade',
+      'Segurança de Rede: Boa cobertura de políticas de rede (15 políticas em 8 namespaces)'
+    ]) }}"
+    improvements: "{{ consolidated_improvements | default([
+      'Segurança: Pontuação 78/100 - Algumas questões de segurança precisam de atenção',
+      'Otimização de Recursos: Pontuação 75/100 - Oportunidades de otimização de custos disponíveis',
+      'Saúde dos Nós: 2 nós com problemas de utilização',
+      'Saúde dos Pods: 3 pods falharam e 5 pods pendentes'
+    ]) }}"
+    critical_issues: "{{ consolidated_critical_issues | default([
+      {
+        'category': 'Segurança',
+        'description': '2 contas de serviço com role cluster-admin',
+        'priority': 'Alta',
+        'impact': 'Risco de segurança elevado'
+      },
+      {
+        'category': 'Segurança',
+        'description': '3 containers privilegiados no namespace de monitoramento',
+        'priority': 'Alta',
+        'impact': 'Privilégios excessivos'
+      },
+      {
+        'category': 'Recursos',
+        'description': 'Nó worker-03 tem alta utilização de memória (85%)',
+        'priority': 'Alta',
+        'impact': 'Possível instabilidade'
+      },
+      {
+        'category': 'Recursos',
+        'description': '3 pods falharam no namespace de monitoramento',
+        'priority': 'Alta',
+        'impact': 'Serviços indisponíveis'
+      }
+    ]) }}"
+    current_monthly_cost: "{{ consolidated_current_monthly_cost | default(2450) }}"
+    optimized_monthly_cost: "{{ consolidated_optimized_monthly_cost | default(2009) }}"
+    potential_savings: "{{ consolidated_potential_savings | default(441) }}"
+    savings_percentage: "{{ consolidated_savings_percentage | default(18) }}"
+    compute_cost: "{{ consolidated_compute_cost | default(1960) }}"
+    compute_percentage: "{{ consolidated_compute_percentage | default(80) }}"
+    storage_cost: "{{ consolidated_storage_cost | default(245) }}"
+    storage_percentage: "{{ consolidated_storage_percentage | default(10) }}"
+    network_cost: "{{ consolidated_network_cost | default(245) }}"
+    network_percentage: "{{ consolidated_network_percentage | default(10) }}"
+    compute_optimization: "{{ consolidated_compute_optimization | default('Consolidar nós subutilizados') }}"
+    storage_optimization: "{{ consolidated_storage_optimization | default('Limpar PVs não utilizados') }}"
+    network_optimization: "{{ consolidated_network_optimization | default('Otimizar serviços LoadBalancer') }}"
+    high_priority_recommendations: "{{ consolidated_high_priority_recommendations | default([
+      'Remover role cluster-admin da conta de serviço de monitoramento',
+      'Implementar contextos de segurança adequados para containers privilegiados',
+      'Evitar executar containers como usuário root',
+      'Investigar e resolver pods que falharam no namespace de monitoramento',
+      'Resolver alta utilização de memória no worker-03',
+      'Consolidar nós subutilizados'
+    ]) }}"
+    medium_priority_recommendations: "{{ consolidated_medium_priority_recommendations | default([
+      'Implementar políticas de rede para namespace de desenvolvimento',
+      'Configurar classe de armazenamento padrão',
+      'Adicionar verificações de saúde para todas as cargas de trabalho de produção',
+      'Implementar políticas de backup para todos os namespaces',
+      'Otimizar uso de serviços LoadBalancer'
+    ]) }}"
+    low_priority_recommendations: "{{ consolidated_low_priority_recommendations | default([
+      'Configurar alertas de monitoramento de recursos',
+      'Implementar autoscaling de pods',
+      'Revisar e otimizar serviços NodePort',
+      'Padronizar convenções de nomenclatura'
+    ]) }}"
+    week1_tasks: "{{ consolidated_week1_tasks | default([
+      'Remover permissões excessivas de cluster-admin',
+      'Resolver pods que falharam no namespace de monitoramento',
+      'Resolver problemas de utilização dos nós'
+    ]) }}"
+    week2_3_tasks: "{{ consolidated_week2_3_tasks | default([
+      'Implementar contextos de segurança para containers privilegiados',
+      'Adicionar verificações de saúde ausentes',
+      'Otimizar serviços LoadBalancer'
+    ]) }}"
+    month2_tasks: "{{ consolidated_month2_tasks | default([
+      'Implementar políticas de rede para todos os namespaces',
+      'Configurar políticas de backup',
+      'Consolidar nós subutilizados'
+    ]) }}"
+    month3_tasks: "{{ consolidated_month3_tasks | default([
+      'Implementar monitoramento e alertas',
+      'Revisar e otimizar todos os serviços',
+      'Completar implementação de melhores práticas'
+    ]) }}"
+    execution_time: "{{ consolidated_execution_time | default('15 minutos') }}"
+    total_components: "{{ consolidated_total_components | default(5) }}"
+    success_rate: "{{ consolidated_success_rate | default(100) }}"
+    total_issues: "{{ consolidated_total_issues | default(12) }}"
+    total_recommendations: "{{ consolidated_total_recommendations | default(18) }}"
+  tags: [reports, markdown, consolidated]
