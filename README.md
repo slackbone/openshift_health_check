@@ -101,6 +101,38 @@ mkdir -p ansible/logs
 
 ## Uso
 
+### Método 0: Simulação com Dados Randômicos (Para Teste)
+
+Antes de executar em um cluster real, você pode testar a ferramenta com dados simulados:
+
+```bash
+# Executar simulação completa
+python3 simulate_execution.py
+
+# Visualizar relatórios gerados
+./view_reports.sh -a
+
+# Listar execuções disponíveis
+./view_reports.sh -l
+
+# Abrir apenas relatório consolidado
+./view_reports.sh -c
+```
+
+A simulação gera:
+- **6 relatórios HTML** com dados randômicos realistas
+- **Estrutura completa** de diretórios organizados
+- **Dados JSON** simulados para todas as categorias
+- **Relatórios Markdown** para análise técnica
+
+**Vantagens da Simulação:**
+- ✅ Testa a estrutura dos relatórios sem cluster real
+- ✅ Valida o design e layout dos templates HTML
+- ✅ Demonstra as funcionalidades da ferramenta
+- ✅ Permite análise dos relatórios antes da execução real
+
+Para mais detalhes, consulte: **[Guia de Simulação](SIMULACAO.md)**
+
 ### Método 1: Script de Execução (Recomendado)
 
 ```bash
@@ -444,12 +476,22 @@ Para suporte e dúvidas:
 
 ## Documentação Adicional
 
+- **[Simulação](SIMULACAO.md)**: Guia completo para executar simulações com dados randômicos
 - **[Análise de Impacto](ANALISE_IMPACTO.md)**: Documento detalhado sobre o impacto da execução do playbook em ambientes de produção
 - **[Arquitetura](ARCHITECTURE.md)**: Documentação técnica da arquitetura da ferramenta
 - **[Exemplos de Uso](ansible/examples/)**: Exemplos práticos de configuração e uso
 - **[Changelog](CHANGELOG.md)**: Histórico de mudanças e versões
 
 ## Changelog
+
+### v1.2.0
+- **Funcionalidade de Simulação com Dados Randômicos**
+- Script `simulate_execution.py` para gerar dados fictícios
+- Script `view_reports.sh` para visualização facilitada dos relatórios
+- Geração de 6 relatórios HTML com dados realistas simulados
+- Documentação completa de simulação em `SIMULACAO.md`
+- Permite testar estrutura e design dos relatórios sem cluster real
+- Validação de templates HTML antes da execução em produção
 
 ### v1.1.0
 - **Nova estrutura de relatórios organizados por execução e tipo**
