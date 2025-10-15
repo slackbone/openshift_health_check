@@ -1,0 +1,120 @@
+---
+# Configuração para Múltiplos Clusters - OpenShift Health Check SEM FinOps
+# Este arquivo demonstra como configurar múltiplos clusters excluindo funcionalidades de FinOps
+
+clusters:
+  # Cluster de Produção
+  - name: "production-cluster"
+    url: "https://api.prod.example.com:6443"
+    token: "sha256~prod-token-here"
+    tags: "coleta_dados,arquitetura,seguranca,boas_praticas,relatorios"
+    description: "Cluster de produção principal"
+    environment: "production"
+    
+  # Cluster de Staging
+  - name: "staging-cluster"
+    url: "https://api.staging.example.com:6443"
+    token: "sha256~staging-token-here"
+    tags: "coleta_dados,seguranca,relatorios"
+    description: "Cluster de staging para testes"
+    environment: "staging"
+    
+  # Cluster de Desenvolvimento
+  - name: "development-cluster"
+    url: "https://api.dev.example.com:6443"
+    token: "sha256~dev-token-here"
+    tags: "coleta_dados,seguranca"
+    description: "Cluster de desenvolvimento"
+    environment: "development"
+    
+  # Cluster de QA
+  - name: "qa-cluster"
+    url: "https://api.qa.example.com:6443"
+    token: "sha256~qa-token-here"
+    tags: "coleta_dados,arquitetura,seguranca,boas_praticas,relatorios"
+    description: "Cluster de QA para testes de qualidade"
+    environment: "qa"
+    
+  # Cluster de Demo
+  - name: "demo-cluster"
+    url: "https://api.demo.example.com:6443"
+    token: "sha256~demo-token-here"
+    tags: "coleta_dados,relatorios"
+    description: "Cluster de demonstração"
+    environment: "demo"
+
+# Configurações globais (aplicadas a todos os clusters)
+global_settings:
+  # Desabilitar FinOps em todos os clusters
+  analyze_cost_optimization: false
+  enable_cost_analysis: false
+  
+  # Configurações de segurança
+  max_privileged_containers: 0
+  max_root_containers: 0
+  
+  # Configurações de arquitetura
+  min_master_nodes: 3
+  min_worker_nodes: 2
+  
+  # Configurações de timeout
+  command_timeout: 300
+  connection_timeout: 30
+  
+  # Configurações de saída
+  generate_html_report: true
+  generate_json_report: true
+  generate_markdown_report: true
+  compress_reports: false
+
+# Configurações específicas por ambiente
+environment_settings:
+  production:
+    max_privileged_containers: 0
+    max_root_containers: 0
+    min_master_nodes: 3
+    min_worker_nodes: 3
+    tags: "coleta_dados,arquitetura,seguranca,boas_praticas,relatorios"
+    
+  staging:
+    max_privileged_containers: 1
+    max_root_containers: 1
+    min_master_nodes: 3
+    min_worker_nodes: 2
+    tags: "coleta_dados,seguranca,relatorios"
+    
+  development:
+    max_privileged_containers: 2
+    max_root_containers: 2
+    min_master_nodes: 1
+    min_worker_nodes: 1
+    tags: "coleta_dados,seguranca"
+    
+  qa:
+    max_privileged_containers: 1
+    max_root_containers: 1
+    min_master_nodes: 3
+    min_worker_nodes: 2
+    tags: "coleta_dados,arquitetura,seguranca,boas_praticas,relatorios"
+    
+  demo:
+    max_privileged_containers: 2
+    max_root_containers: 2
+    min_master_nodes: 1
+    min_worker_nodes: 1
+    tags: "coleta_dados,relatorios"
+
+# Configurações de notificação (opcional)
+notifications:
+  enabled: false
+  webhook_url: ""
+  slack_channel: "#openshift-health-check"
+  email_recipients: []
+  
+# Configurações de logging
+logging:
+  level: "INFO"
+  format: "json"
+  file: "{{ playbook_dir }}/logs/multiple_clusters_health_check.log"
+  max_size: "50MB"
+  backup_count: 10

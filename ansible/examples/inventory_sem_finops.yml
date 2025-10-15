@@ -1,0 +1,77 @@
+---
+# Arquivo de Inventário - OpenShift Health Check SEM FinOps
+# Este arquivo demonstra como configurar o inventário para execução sem FinOps
+
+all:
+  children:
+    # Configuração para execução local
+    local_execution:
+      hosts:
+        localhost:
+          ansible_connection: local
+          ansible_python_interpreter: "{{ ansible_playbook_python }}"
+          # Configurações específicas para execução sem FinOps
+          analyze_cost_optimization: false
+          enable_cost_analysis: false
+          
+    # Configuração para múltiplos clusters (sem FinOps)
+    openshift_clusters:
+      hosts:
+        # Cluster de Produção
+        production-cluster:
+          ansible_host: localhost
+          ansible_connection: local
+          ansible_python_interpreter: "{{ ansible_playbook_python }}"
+          openshift_cluster_url: "https://api.prod.example.com:6443"
+          openshift_token: "sha256~prod-token-here"
+          openshift_context: "production"
+          # Configurações específicas para produção (sem FinOps)
+          max_privileged_containers: 0
+          max_root_containers: 0
+          min_master_nodes: 3
+          min_worker_nodes: 3
+          analyze_cost_optimization: false
+          enable_cost_analysis: false
+          
+        # Cluster de Staging
+        staging-cluster:
+          ansible_host: localhost
+          ansible_connection: local
+          ansible_python_interpreter: "{{ ansible_playbook_python }}"
+          openshift_cluster_url: "https://api.staging.example.com:6443"
+          openshift_token: "sha256~staging-token-here"
+          openshift_context: "staging"
+          # Configurações específicas para staging (sem FinOps)
+          max_privileged_containers: 1
+          max_root_containers: 1
+          min_master_nodes: 3
+          min_worker_nodes: 2
+          analyze_cost_optimization: false
+          enable_cost_analysis: false
+          
+        # Cluster de Desenvolvimento
+        development-cluster:
+          ansible_host: localhost
+          ansible_connection: local
+          ansible_python_interpreter: "{{ ansible_playbook_python }}"
+          openshift_cluster_url: "https://api.dev.example.com:6443"
+          openshift_token: "sha256~dev-token-here"
+          openshift_context: "development"
+          # Configurações específicas para desenvolvimento (sem FinOps)
+          max_privileged_containers: 2
+          max_root_containers: 2
+          min_master_nodes: 1
+          min_worker_nodes: 1
+          analyze_cost_optimization: false
+          enable_cost_analysis: false
+          
+    # Configuração para execução remota (se necessário)
+    remote_execution:
+      hosts:
+        bastion-server:
+          ansible_host: bastion.example.com
+          ansible_user: admin
+          ansible_ssh_private_key_file: ~/.ssh/id_rsa
+          # Configurações para execução remota (sem FinOps)
+          analyze_cost_optimization: false
+          enable_cost_analysis: false

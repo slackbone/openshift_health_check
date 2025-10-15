@@ -189,6 +189,36 @@ ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
 ./examples/run_health_check_multiple_clusters.sh -l
 ```
 
+### Método 4: Execução SEM FinOps (Recomendado para Foco em Segurança/Arquitetura)
+
+Para executar a avaliação **excluindo funcionalidades de FinOps** (análise de custos):
+
+```bash
+# Execução completa sem FinOps
+./examples/executar_sem_finops.sh \
+  -u https://api.cluster.example.com:6443 \
+  -t sha256~seu-token-aqui \
+  -n production-cluster
+
+# Execução em múltiplos clusters sem FinOps
+./examples/executar_multiplos_clusters_sem_finops.sh \
+  -c examples/multiple_clusters_config_sem_finops.yml
+
+# Apenas análise de segurança (sem FinOps)
+./examples/executar_sem_finops.sh \
+  -u https://api.cluster.example.com:6443 \
+  -t sha256~seu-token-aqui \
+  --tags seguranca
+```
+
+**Vantagens da execução sem FinOps:**
+- ✅ **Foco em Segurança e Arquitetura** - Análise mais rápida e direcionada
+- ✅ **Menor Impacto** - Reduz tempo de execução e uso de recursos
+- ✅ **Relatórios Limpos** - Sem seções de análise de custos
+- ✅ **Ideal para Auditorias** - Foco em conformidade e boas práticas
+
+Para mais detalhes, consulte: **[Exemplos SEM FinOps](ansible/examples/README_SEM_FINOPS.md)**
+
 ### Tags Disponíveis
 
 - `coleta_dados`: Coleta de dados do cluster
@@ -480,6 +510,7 @@ Para suporte e dúvidas:
 - **[Análise de Impacto](ANALISE_IMPACTO.md)**: Documento detalhado sobre o impacto da execução do playbook em ambientes de produção
 - **[Arquitetura](ARCHITECTURE.md)**: Documentação técnica da arquitetura da ferramenta
 - **[Exemplos de Uso](ansible/examples/)**: Exemplos práticos de configuração e uso
+- **[Exemplos SEM FinOps](ansible/examples/README_SEM_FINOPS.md)**: Exemplos específicos excluindo funcionalidades de FinOps
 - **[Changelog](CHANGELOG.md)**: Histórico de mudanças e versões
 
 ## Changelog
