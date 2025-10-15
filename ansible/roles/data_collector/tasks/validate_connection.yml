@@ -52,7 +52,7 @@
 - name: Fail if cluster connectivity test fails
   fail:
     msg: "Cannot connect to OpenShift cluster. Please check your credentials and cluster URL."
-  when: cluster_connectivity.rc != 0
+  when: cluster_connectivity is defined and cluster_connectivity.rc is defined and cluster_connectivity.rc != 0
 
 - name: Display cluster connectivity status
   debug:
