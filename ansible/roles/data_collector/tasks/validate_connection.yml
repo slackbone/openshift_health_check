@@ -26,19 +26,18 @@
   set_fact:
     cli_command: "{{ 'oc' if oc_check.rc == 0 else 'kubectl' }}"
 
+- name: Set environment variables for cluster connectivity
+  set_fact:
+    cluster_env:
+      KUBECONFIG: "{{ openshift_kubeconfig }}"
+  when: openshift_cluster_url is defined and openshift_cluster_url != ""
+
 - name: Test cluster connectivity
   command: "{{ cli_command }} cluster-info"
   register: cluster_connectivity
   failed_when: false
   changed_when: false
-  environment:
-    KUBECONFIG: "{{ openshift_kubeconfig }}"
-    {% if openshift_cluster_url %}
-    KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-    {% endif %}
-    {% if openshift_token %}
-    KUBERNETES_TOKEN: "{{ openshift_token }}"
-    {% endif %}
+  environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 
 - name: Fail if cluster connectivity test fails
   fail:
@@ -52,14 +51,7 @@
 - name: Get cluster version information
   command: "{{ cli_command }} version"
   register: cluster_version
-  environment:
-    KUBECONFIG: "{{ openshift_kubeconfig }}"
-    {% if openshift_cluster_url %}
-    KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-    {% endif %}
-    {% if openshift_token %}
-    KUBERNETES_TOKEN: "{{ openshift_token }}"
-    {% endif %}
+  environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 
 - name: Display cluster version
   debug:

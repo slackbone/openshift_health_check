@@ -4,78 +4,36 @@
     - name: Get deployments detailed information
       command: "{{ cli_command }} get deployments --all-namespaces -o json"
       register: deployments_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 
     - name: Get replicasets
       command: "{{ cli_command }} get replicasets --all-namespaces -o json"
       register: replicasets_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get daemonsets
       command: "{{ cli_command }} get daemonsets --all-namespaces -o json"
       register: daemonsets_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get statefulsets
       command: "{{ cli_command }} get statefulsets --all-namespaces -o json"
       register: statefulsets_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get jobs
       command: "{{ cli_command }} get jobs --all-namespaces -o json"
       register: jobs_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get cronjobs
       command: "{{ cli_command }} get cronjobs --all-namespaces -o json"
       register: cronjobs_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Save deployments data to file

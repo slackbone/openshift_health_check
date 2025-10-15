@@ -3,7 +3,7 @@
 # Este playbook executa uma análise abrangente de clusters OpenShift 4.17
 - name: Avaliação de Saúde do OpenShift
   hosts: localhost
-  gather_facts: false
+  gather_facts: true
   vars:
     # Configurações de conexão com o cluster OpenShift
     openshift_cluster_url: "{{ cluster_url | default('') }}"
@@ -15,6 +15,7 @@
     cluster_name: "{{ cluster_name | default('openshift-cluster') }}"
     execution_id: "{{ cluster_name }}_{{ timestamp }}"
     reports_output_dir: "{{ output_dir }}/{{ execution_id }}"
+    report_output_path: "{{ reports_output_dir }}"
     
   pre_tasks:
     # Validação das variáveis obrigatórias
@@ -63,10 +64,6 @@
         - "{{ reports_output_dir }}/html/resource_optimization"
         - "{{ reports_output_dir }}/html/consolidated"
         
-    # Definir caminho de saída como fact
-    - name: Definir caminho de saída dos relatórios
-      set_fact:
-        report_output_path: "{{ reports_output_dir }}"
 
   roles:
     # Role para coleta de dados do cluster

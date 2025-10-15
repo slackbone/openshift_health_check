@@ -4,66 +4,31 @@
     - name: Get cluster service versions (OpenShift specific)
       command: "{{ cli_command }} get clusterserviceversions --all-namespaces -o json"
       register: csv_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get subscriptions (OpenShift specific)
       command: "{{ cli_command }} get subscriptions --all-namespaces -o json"
       register: subscriptions_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get install plans (OpenShift specific)
       command: "{{ cli_command }} get installplans --all-namespaces -o json"
       register: installplans_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get operator groups (OpenShift specific)
       command: "{{ cli_command }} get operatorgroups --all-namespaces -o json"
       register: operatorgroups_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get catalogs (OpenShift specific)
       command: "{{ cli_command }} get catalogs --all-namespaces -o json"
       register: catalogs_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Save operators data to file

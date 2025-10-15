@@ -4,38 +4,17 @@
     - name: Get pods detailed information
       command: "{{ cli_command }} get pods --all-namespaces -o json"
       register: pods_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 
     - name: Get pods with labels
       command: "{{ cli_command }} get pods --all-namespaces --show-labels"
       register: pods_labels_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 
     - name: Get pod templates
       command: "{{ cli_command }} get podtemplates --all-namespaces -o json"
       register: pod_templates_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Save pods data to file

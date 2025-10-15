@@ -4,64 +4,29 @@
     - name: Get cluster roles
       command: "{{ cli_command }} get clusterroles -o json"
       register: clusterroles_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 
     - name: Get cluster role bindings
       command: "{{ cli_command }} get clusterrolebindings -o json"
       register: clusterrolebindings_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 
     - name: Get roles
       command: "{{ cli_command }} get roles --all-namespaces -o json"
       register: roles_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get role bindings
       command: "{{ cli_command }} get rolebindings --all-namespaces -o json"
       register: rolebindings_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get service accounts
       command: "{{ cli_command }} get serviceaccounts --all-namespaces -o json"
       register: serviceaccounts_json_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Save RBAC data to file

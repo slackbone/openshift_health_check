@@ -4,66 +4,31 @@
     - name: Get cluster metrics (if available)
       command: "{{ cli_command }} get --raw /metrics"
       register: cluster_metrics_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get top nodes
       command: "{{ cli_command }} adm top nodes"
       register: top_nodes_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get top pods
       command: "{{ cli_command }} adm top pods --all-namespaces"
       register: top_pods_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get resource usage by namespace
       command: "{{ cli_command }} adm top pods --all-namespaces --sort-by=cpu"
       register: top_pods_cpu_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get resource usage by memory
       command: "{{ cli_command }} adm top pods --all-namespaces --sort-by=memory"
       register: top_pods_memory_result
-      environment:
-        KUBECONFIG: "{{ openshift_kubeconfig }}"
-        {% if openshift_cluster_url %}
-        KUBERNETES_SERVER: "{{ openshift_cluster_url }}"
-        {% endif %}
-        {% if openshift_token %}
-        KUBERNETES_TOKEN: "{{ openshift_token }}"
-        {% endif %}
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Save metrics data to file
