@@ -12,17 +12,17 @@
 
 | Componente | Status | Arquivo |
 |------------|--------|---------|
-| Informações do Cluster | {{ '✓ Sucesso' if consolidated_data.data_files.cluster_info else '✗ Falhou' }} | {{ consolidated_data.data_files.cluster_info or 'N/A' }} |
-| Nós | {{ '✓ Sucesso' if consolidated_data.data_files.nodes else '✗ Falhou' }} | {{ consolidated_data.data_files.nodes or 'N/A' }} |
-| Namespaces | {{ '✓ Sucesso' if consolidated_data.data_files.namespaces else '✗ Falhou' }} | {{ consolidated_data.data_files.namespaces or 'N/A' }} |
-| Pods | {{ '✓ Sucesso' if consolidated_data.data_files.pods else '✗ Falhou' }} | {{ consolidated_data.data_files.pods or 'N/A' }} |
-| Serviços | {{ '✓ Sucesso' if consolidated_data.data_files.services else '✗ Falhou' }} | {{ consolidated_data.data_files.services or 'N/A' }} |
-| Deployments | {{ '✓ Sucesso' if consolidated_data.data_files.deployments else '✗ Falhou' }} | {{ consolidated_data.data_files.deployments or 'N/A' }} |
-| RBAC | {{ '✓ Sucesso' if consolidated_data.data_files.rbac else '✗ Falhou' }} | {{ consolidated_data.data_files.rbac or 'N/A' }} |
-| Configurações de Segurança | {{ '✓ Sucesso' if consolidated_data.data_files.security_configs else '✗ Falhou' }} | {{ consolidated_data.data_files.security_configs or 'N/A' }} |
-| Operadores | {{ '✓ Sucesso' if consolidated_data.data_files.operators else '✗ Falhou' }} | {{ consolidated_data.data_files.operators or 'N/A' }} |
-| Métricas | {{ '✓ Sucesso' if consolidated_data.data_files.metrics else '✗ Falhou' }} | {{ consolidated_data.data_files.metrics or 'N/A' }} |
-| Eventos | {{ '✓ Sucesso' if consolidated_data.data_files.events else '✗ Falhou' }} | {{ consolidated_data.data_files.events or 'N/A' }} |
+| Informações do Cluster | {{ 'Sucesso' if consolidated_data.data_files.cluster_info else 'Falhou' }} | {{ consolidated_data.data_files.cluster_info or 'N/A' }} |
+| Nós | {{ 'Sucesso' if consolidated_data.data_files.nodes else 'Falhou' }} | {{ consolidated_data.data_files.nodes or 'N/A' }} |
+| Namespaces | {{ 'Sucesso' if consolidated_data.data_files.namespaces else 'Falhou' }} | {{ consolidated_data.data_files.namespaces or 'N/A' }} |
+| Pods | {{ 'Sucesso' if consolidated_data.data_files.pods else 'Falhou' }} | {{ consolidated_data.data_files.pods or 'N/A' }} |
+| Serviços | {{ 'Sucesso' if consolidated_data.data_files.services else 'Falhou' }} | {{ consolidated_data.data_files.services or 'N/A' }} |
+| Deployments | {{ 'Sucesso' if consolidated_data.data_files.deployments else 'Falhou' }} | {{ consolidated_data.data_files.deployments or 'N/A' }} |
+| RBAC | {{ 'Sucesso' if consolidated_data.data_files.rbac else 'Falhou' }} | {{ consolidated_data.data_files.rbac or 'N/A' }} |
+| Configurações de Segurança | {{ 'Sucesso' if consolidated_data.data_files.security_configs else 'Falhou' }} | {{ consolidated_data.data_files.security_configs or 'N/A' }} |
+| Operadores | {{ 'Sucesso' if consolidated_data.data_files.operators else 'Falhou' }} | {{ consolidated_data.data_files.operators or 'N/A' }} |
+| Métricas | {{ 'Sucesso' if consolidated_data.data_files.metrics else 'Falhou' }} | {{ consolidated_data.data_files.metrics or 'N/A' }} |
+| Eventos | {{ 'Sucesso' if consolidated_data.data_files.events else 'Falhou' }} | {{ consolidated_data.data_files.events or 'N/A' }} |
 
 ## Estatísticas da Coleta
 
@@ -55,9 +55,9 @@ Os dados coletados serão processados pelos roles de análise:
 ## Notas
 
 {% if success_count < total_count %}
-⚠️ **Aviso:** Algumas tarefas de coleta de dados falharam. A análise pode estar incompleta.
+**AVISO:** Algumas tarefas de coleta de dados falharam. A análise pode estar incompleta.
 {% else %}
-✅ **Sucesso:** Todas as tarefas de coleta de dados foram concluídas com sucesso.
+**SUCESSO:** Todas as tarefas de coleta de dados foram concluídas com sucesso.
 {% endif %}
 
 Este relatório foi gerado automaticamente pelo playbook de Verificação de Saúde OpenShift do Ansible.

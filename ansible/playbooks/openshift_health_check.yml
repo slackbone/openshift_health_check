@@ -208,7 +208,7 @@
           
           Estrutura de Relatórios:
           
-          📊 Relatórios HTML (Executivos):
+          Relatórios HTML (Executivos):
           - Relatório Consolidado: {{ report_output_path }}/html/consolidated/consolidated_health_check_report.html
           - Coleta de Dados: {{ report_output_path }}/html/data_collection/data_collection_report.html
           - Análise de Arquitetura: {{ report_output_path }}/html/architecture_analysis/architecture_analysis_report.html
@@ -216,7 +216,7 @@
           - Melhores Práticas: {{ report_output_path }}/html/best_practices_analysis/best_practices_analysis_report.html
           - Otimização de Recursos: {{ report_output_path }}/html/resource_optimization/resource_optimization_report.html
           
-          📋 Relatórios Markdown (Detalhados):
+          Relatórios Markdown (Detalhados):
           - Coleta de Dados: {{ report_output_path }}/data_collection/data_collection_report.md
           - Análise de Arquitetura: {{ report_output_path }}/architecture_analysis/architecture_analysis_report.md
           - Análise de Segurança: {{ report_output_path }}/security_analysis/security_analysis_report.md

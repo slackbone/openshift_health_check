@@ -1,0 +1,37 @@
+---
+# Best Practices Analyzer Role - Main Tasks
+# Este role analisa conformidade com boas práticas do OpenShift
+
+- name: Include naming conventions analysis tasks
+  include_tasks: analyze_naming_conventions.yml
+  when: analyze_naming_conventions | bool
+  tags: ['best_practices', 'naming']
+
+- name: Include resource management analysis tasks
+  include_tasks: analyze_resource_management.yml
+  when: analyze_resource_management | bool
+  tags: ['best_practices', 'resource_management']
+
+- name: Include labeling analysis tasks
+  include_tasks: analyze_labeling.yml
+  when: analyze_labeling | bool
+  tags: ['best_practices', 'labeling']
+
+- name: Include health checks analysis tasks
+  include_tasks: analyze_health_checks.yml
+  when: analyze_health_checks | bool
+  tags: ['best_practices', 'health_checks']
+
+- name: Include backup policies analysis tasks
+  include_tasks: analyze_backup_policies.yml
+  when: analyze_backup_policies | bool
+  tags: ['best_practices', 'backup']
+
+- name: Include monitoring analysis tasks
+  include_tasks: analyze_monitoring.yml
+  when: analyze_monitoring | bool
+  tags: ['best_practices', 'monitoring']
+
+- name: Consolidate best practices analysis
+  include_tasks: consolidate_analysis.yml
+  tags: ['best_practices', 'consolidation']

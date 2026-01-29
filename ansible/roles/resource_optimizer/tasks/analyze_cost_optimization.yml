@@ -1,0 +1,20 @@
+---
+- name: Analyze cost optimization
+  block:
+    - name: Initialize cost optimization analysis
+      set_fact:
+        cost_optimization_analysis: {}
+      when: resource_optimization_analysis is not defined or resource_optimization_analysis.get('cost_optimization') is not defined
+
+    - name: Set fact for cost optimization analysis
+      set_fact:
+        resource_optimization_analysis: "{{ resource_optimization_analysis | default({}) | combine({'cost_optimization': cost_optimization_analysis | default({})}, recursive=True) }}"
+
+    - name: Display cost optimization analysis status
+      debug:
+        msg: "Cost optimization analysis completed (stub implementation - FinOps disabled by default)"
+
+  rescue:
+    - name: Handle cost optimization analysis failure
+      debug:
+        msg: "Failed to analyze cost optimization: {{ ansible_failed_result.msg }}"

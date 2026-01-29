@@ -2,7 +2,7 @@
 
 Este guia explica como configurar e executar o OpenShift Health Check em múltiplos clusters.
 
-## 📋 Índice
+## Índice
 
 1. [Configuração Rápida](#configuração-rápida)
 2. [Estrutura do Inventário](#estrutura-do-inventário)
@@ -11,13 +11,15 @@ Este guia explica como configurar e executar o OpenShift Health Check em múltip
 5. [Gerenciamento de Tokens](#gerenciamento-de-tokens)
 6. [Solução de Problemas](#solução-de-problemas)
 
-## 🚀 Configuração Rápida
+## Configuração Rápida
 
-### Passo 1: Copie o arquivo de exemplo
+### Passo 1: Configure o arquivo de inventário
 
 ```bash
 cd ansible/inventory
-cp hosts_multiplos_clusters.yml hosts.yml
+cp hosts.yml.example hosts.yml
+# Depois edite hosts.yml e descomente a seção openshift_clusters
+# Configure as URLs, tokens e nomes dos seus clusters
 ```
 
 ### Passo 2: Edite o arquivo `hosts.yml`
@@ -32,6 +34,7 @@ openshift_clusters:
       ansible_connection: local
       openshift_cluster_url: "https://api.meu-cluster.com:6443"
       openshift_token: "sha256~meu-token"
+      openshift_username: "usuario@example.com"
       cluster_name: "meu-cluster-prod"
     
     meu-cluster-dev:
@@ -39,6 +42,7 @@ openshift_clusters:
       ansible_connection: local
       openshift_cluster_url: "https://api.dev.meu-cluster.com:6443"
       openshift_token: "sha256~meu-token-dev"
+      openshift_username: "usuario@example.com"
       cluster_name: "meu-cluster-dev"
 ```
 
@@ -54,7 +58,7 @@ ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
   --limit meu-cluster-prod
 ```
 
-## 📁 Estrutura do Inventário
+## Estrutura do Inventário
 
 ### Formato Básico
 
@@ -68,6 +72,7 @@ all:
           ansible_connection: local
           openshift_cluster_url: "https://api.cluster1.com:6443"
           openshift_token: "sha256~token1"
+          openshift_username: "usuario1@example.com"
           cluster_name: "nome-do-cluster-1"
         
         nome-do-cluster-2:
@@ -75,6 +80,7 @@ all:
           ansible_connection: local
           openshift_cluster_url: "https://api.cluster2.com:6443"
           openshift_token: "sha256~token2"
+          openshift_username: "usuario2@example.com"
           cluster_name: "nome-do-cluster-2"
 ```
 
@@ -84,6 +90,7 @@ all:
 |----------|-----------|---------|
 | `openshift_cluster_url` | URL do API Server | `https://api.cluster.com:6443` |
 | `openshift_token` | Token de autenticação | `sha256~ABC123...` |
+| `openshift_username` | Usuário do OpenShift (obrigatório) | `usuario@example.com` |
 | `cluster_name` | Nome único do cluster | `production-cluster` |
 
 ### Variáveis Opcionais por Cluster
@@ -91,11 +98,11 @@ all:
 | Variável | Descrição | Padrão |
 |----------|-----------|--------|
 | `max_privileged_containers` | Máximo de containers privilegiados | `0` |
-| `analyze_cost_optimization` | Analisar custos | `true` |
+| `analyze_cost_optimization` | Analisar custos (desabilitado por padrão) | `false` |
 | `collect_metrics` | Coletar métricas | `true` |
 | `collect_events` | Coletar eventos | `true` |
 
-## 🎯 Executando em Múltiplos Clusters
+## Executando em Múltiplos Clusters
 
 ### Método 1: Usando Ansible Playbook Diretamente
 
@@ -159,7 +166,7 @@ for cluster in production-cluster staging-cluster development-cluster; do
 done
 ```
 
-## 💡 Exemplos Práticos
+## Exemplos Práticos
 
 ### Exemplo 1: Configuração Básica de 3 Clusters
 
@@ -173,6 +180,7 @@ all:
           ansible_connection: local
           openshift_cluster_url: "https://api.prod.example.com:6443"
           openshift_token: "sha256~token-prod"
+          openshift_username: "usuario-prod@example.com"
           cluster_name: "prod"
         
         staging:
@@ -180,6 +188,7 @@ all:
           ansible_connection: local
           openshift_cluster_url: "https://api.staging.example.com:6443"
           openshift_token: "sha256~token-staging"
+          openshift_username: "usuario-staging@example.com"
           cluster_name: "staging"
         
         dev:
@@ -187,6 +196,7 @@ all:
           ansible_connection: local
           openshift_cluster_url: "https://api.dev.example.com:6443"
           openshift_token: "sha256~token-dev"
+          openshift_username: "usuario-dev@example.com"
           cluster_name: "dev"
 ```
 
@@ -206,10 +216,11 @@ openshift_clusters:
       ansible_connection: local
       openshift_cluster_url: "https://api.prod.com:6443"
       openshift_token: "sha256~token-prod"
+      openshift_username: "usuario-prod@example.com"
       cluster_name: "production"
       # Produção: mais rigoroso
       max_privileged_containers: 0
-      analyze_cost_optimization: true
+      analyze_cost_optimization: false  # Análise de custos desabilitada por padrão
       collect_metrics: true
     
     development:
@@ -217,10 +228,11 @@ openshift_clusters:
       ansible_connection: local
       openshift_cluster_url: "https://api.dev.com:6443"
       openshift_token: "sha256~token-dev"
+      openshift_username: "usuario-dev@example.com"
       cluster_name: "development"
       # Desenvolvimento: mais flexível
       max_privileged_containers: 2
-      analyze_cost_optimization: false
+      analyze_cost_optimization: false  # Análise de custos desabilitada por padrão
       collect_metrics: false
 ```
 
@@ -256,7 +268,7 @@ Adicione ao crontab:
 0 2 * * * /path/to/health_check_all_clusters.sh >> /var/log/health_check.log 2>&1
 ```
 
-## 🔐 Gerenciamento de Tokens
+## Gerenciamento de Tokens
 
 ### Opção 1: Tokens no Inventário (Simples)
 
@@ -267,7 +279,7 @@ openshift_clusters:
       openshift_token: "sha256~token-aqui"
 ```
 
-**⚠️ Atenção:** Tokens ficam em texto plano no arquivo.
+**ATENCAO:** Tokens ficam em texto plano no arquivo.
 
 ### Opção 2: Ansible Vault (Recomendado)
 
@@ -284,6 +296,11 @@ vault_cluster_tokens:
   production-cluster: "sha256~token-prod"
   staging-cluster: "sha256~token-staging"
   development-cluster: "sha256~token-dev"
+
+vault_cluster_usernames:
+  production-cluster: "usuario-prod@example.com"
+  staging-cluster: "usuario-staging@example.com"
+  development-cluster: "usuario-dev@example.com"
 ```
 
 **3. Referenciar no inventário:**
@@ -293,8 +310,10 @@ openshift_clusters:
   hosts:
     production-cluster:
       openshift_token: "{{ vault_cluster_tokens['production-cluster'] }}"
+      openshift_username: "{{ vault_cluster_usernames['production-cluster'] }}"
     staging-cluster:
       openshift_token: "{{ vault_cluster_tokens['staging-cluster'] }}"
+      openshift_username: "{{ vault_cluster_usernames['staging-cluster'] }}"
 ```
 
 **4. Executar com senha do vault:**
@@ -363,7 +382,7 @@ reports/
 └── development-cluster_20241215_150145/
 ```
 
-## 📊 Visualizando Relatórios de Múltiplos Clusters
+## Visualizando Relatórios de Múltiplos Clusters
 
 ### Listar todos os relatórios:
 
@@ -386,7 +405,7 @@ diff reports/production-cluster_*/consolidated/consolidated_health_check_report.
       reports/staging-cluster_*/consolidated/consolidated_health_check_report.md
 ```
 
-## 📚 Referências
+## Referências
 
 - [Documentação Principal](../../README.md)
 - [Guia de Inventário](./README.md)

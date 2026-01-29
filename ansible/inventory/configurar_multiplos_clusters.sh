@@ -6,7 +6,7 @@
 set -e
 
 INVENTORY_FILE="ansible/inventory/hosts.yml"
-EXAMPLE_FILE="ansible/inventory/hosts_multiplos_clusters.yml"
+EXAMPLE_FILE="ansible/inventory/hosts.yml.example"
 
 # Cores
 GREEN='\033[0;32m'
@@ -47,7 +47,7 @@ echo -e "${GREEN}Copiando arquivo de exemplo...${NC}"
 cp "$EXAMPLE_FILE" "$INVENTORY_FILE"
 
 echo ""
-echo -e "${GREEN}✓ Arquivo copiado com sucesso!${NC}"
+echo -e "${GREEN}OK: Arquivo copiado com sucesso!${NC}"
 echo ""
 echo -e "${BLUE}Próximos passos:${NC}"
 echo "1. Edite o arquivo: $INVENTORY_FILE"

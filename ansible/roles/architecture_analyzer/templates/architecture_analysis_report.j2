@@ -17,12 +17,12 @@
 
 | Componente | Status |
 |------------|--------|
-| Visão Geral do Cluster | {{ '✓ Sucesso' if analysis_status.cluster_overview else '✗ Falhou' }} |
-| Análise de Nós | {{ '✓ Sucesso' if analysis_status.node_analysis else '✗ Falhou' }} |
-| Análise de Rede | {{ '✓ Sucesso' if analysis_status.network_analysis else '✗ Falhou' }} |
-| Análise de Armazenamento | {{ '✓ Sucesso' if analysis_status.storage_analysis else '✗ Falhou' }} |
-| Análise de Operadores | {{ '✓ Sucesso' if analysis_status.operator_analysis else '✗ Falhou' }} |
-| Distribuição de Recursos | {{ '✓ Sucesso' if analysis_status.resource_distribution else '✗ Falhou' }} |
+| Visão Geral do Cluster | {{ 'Sucesso' if analysis_status.cluster_overview else 'Falhou' }} |
+| Análise de Nós | {{ 'Sucesso' if analysis_status.node_analysis else 'Falhou' }} |
+| Análise de Rede | {{ 'Sucesso' if analysis_status.network_analysis else 'Falhou' }} |
+| Análise de Armazenamento | {{ 'Sucesso' if analysis_status.storage_analysis else 'Falhou' }} |
+| Análise de Operadores | {{ 'Sucesso' if analysis_status.operator_analysis else 'Falhou' }} |
+| Distribuição de Recursos | {{ 'Sucesso' if analysis_status.resource_distribution else 'Falhou' }} |
 
 ## Visão Geral do Cluster
 {% if cluster_overview %}
@@ -37,11 +37,11 @@
 {% if cluster_overview.get('issues', []) | length > 0 %}
 ### Problemas do Cluster
 {% for issue in cluster_overview.get('issues', []) %}
-- ⚠️ {{ issue }}
+- AVISO: {{ issue }}
 {% endfor %}
 {% endif %}
 {% else %}
-❌ Análise da visão geral do cluster falhou ou não disponível
+ERRO: Análise da visão geral do cluster falhou ou não disponível
 {% endif %}
 
 ## Arquitetura de Nós
@@ -62,11 +62,11 @@
 {% if node_analysis.get('issues', []) | length > 0 %}
 ### Problemas dos Nós
 {% for issue in node_analysis.get('issues', []) %}
-- ⚠️ {{ issue }}
+- AVISO: {{ issue }}
 {% endfor %}
 {% endif %}
 {% else %}
-❌ Análise da arquitetura de nós falhou
+ERRO: Análise da arquitetura de nós falhou
 {% endif %}
 
 ## Arquitetura de Rede
@@ -83,11 +83,11 @@
 {% if network_analysis.get('issues', []) | length > 0 %}
 ### Problemas de Rede
 {% for issue in network_analysis.get('issues', []) %}
-- ⚠️ {{ issue }}
+- AVISO: {{ issue }}
 {% endfor %}
 {% endif %}
 {% else %}
-❌ Análise da arquitetura de rede falhou
+ERRO: Análise da arquitetura de rede falhou
 {% endif %}
 
 ## Arquitetura de Armazenamento
@@ -103,11 +103,11 @@
 {% if storage_analysis.get('issues', []) | length > 0 %}
 ### Problemas de Armazenamento
 {% for issue in storage_analysis.get('issues', []) %}
-- ⚠️ {{ issue }}
+- AVISO: {{ issue }}
 {% endfor %}
 {% endif %}
 {% else %}
-❌ Análise da arquitetura de armazenamento falhou
+ERRO: Análise da arquitetura de armazenamento falhou
 {% endif %}
 
 ## Saúde dos Operadores
@@ -122,11 +122,11 @@
 {% if operator_analysis.get('operator_issues', []) | length > 0 %}
 ### Problemas dos Operadores
 {% for issue in operator_analysis.get('operator_issues', []) %}
-- ⚠️ {{ issue }}
+- AVISO: {{ issue }}
 {% endfor %}
 {% endif %}
 {% else %}
-❌ Análise da saúde dos operadores falhou
+ERRO: Análise da saúde dos operadores falhou
 {% endif %}
 
 ## Distribuição de Recursos
@@ -146,11 +146,11 @@
 {% if resource_distribution.get('issues', []) | length > 0 %}
 ### Problemas de Distribuição de Recursos
 {% for issue in resource_distribution.get('issues', []) %}
-- ⚠️ {{ issue }}
+- AVISO: {{ issue }}
 {% endfor %}
 {% endif %}
 {% else %}
-❌ Análise da distribuição de recursos falhou
+ERRO: Análise da distribuição de recursos falhou
 {% endif %}
 
 ## Recomendações
@@ -204,9 +204,9 @@
 ## Notas
 
 {% if success_count < total_count %}
-⚠️ **Aviso:** Algumas tarefas de análise de arquitetura falharam. A análise pode estar incompleta.
+**AVISO:** Algumas tarefas de análise de arquitetura falharam. A análise pode estar incompleta.
 {% else %}
-✅ **Sucesso:** Todas as tarefas de análise de arquitetura foram concluídas com sucesso.
+**SUCESSO:** Todas as tarefas de análise de arquitetura foram concluídas com sucesso.
 {% endif %}
 
 Este relatório foi gerado automaticamente pelo playbook de Verificação de Saúde OpenShift do Ansible.

@@ -54,17 +54,17 @@
           Data collection completed!
           
           Collection Status:
-          - Cluster Info: {{ '✓' if (collection_status | default({})).cluster_info | default(false) else '✗' }}
-          - Nodes: {{ '✓' if (collection_status | default({})).nodes | default(false) else '✗' }}
-          - Namespaces: {{ '✓' if (collection_status | default({})).namespaces | default(false) else '✗' }}
-          - Pods: {{ '✓' if (collection_status | default({})).pods | default(false) else '✗' }}
-          - Services: {{ '✓' if (collection_status | default({})).services | default(false) else '✗' }}
-          - Deployments: {{ '✓' if (collection_status | default({})).deployments | default(false) else '✗' }}
-          - RBAC: {{ '✓' if (collection_status | default({})).rbac | default(false) else '✗' }}
-          - Security Configs: {{ '✓' if (collection_status | default({})).security_configs | default(false) else '✗' }}
-          - Operators: {{ '✓' if (collection_status | default({})).operators | default(false) else '✗' }}
-          - Metrics: {{ '✓' if (collection_status | default({})).metrics | default(false) else '✗' }}
-          - Events: {{ '✓' if (collection_status | default({})).events | default(false) else '✗' }}
+          - Cluster Info: {{ 'OK' if (collection_status | default({})).cluster_info | default(false) else 'Falhou' }}
+          - Nodes: {{ 'OK' if (collection_status | default({})).nodes | default(false) else 'Falhou' }}
+          - Namespaces: {{ 'OK' if (collection_status | default({})).namespaces | default(false) else 'Falhou' }}
+          - Pods: {{ 'OK' if (collection_status | default({})).pods | default(false) else 'Falhou' }}
+          - Services: {{ 'OK' if (collection_status | default({})).services | default(false) else 'Falhou' }}
+          - Deployments: {{ 'OK' if (collection_status | default({})).deployments | default(false) else 'Falhou' }}
+          - RBAC: {{ 'OK' if (collection_status | default({})).rbac | default(false) else 'Falhou' }}
+          - Security Configs: {{ 'OK' if (collection_status | default({})).security_configs | default(false) else 'Falhou' }}
+          - Operators: {{ 'OK' if (collection_status | default({})).operators | default(false) else 'Falhou' }}
+          - Metrics: {{ 'OK' if (collection_status | default({})).metrics | default(false) else 'Falhou' }}
+          - Events: {{ 'OK' if (collection_status | default({})).events | default(false) else 'Falhou' }}
           
           Data saved to: {{ data_output_dir }}
 

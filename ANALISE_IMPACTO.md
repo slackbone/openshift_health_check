@@ -4,7 +4,7 @@
 
 Este documento analisa o impacto da execução do playbook de Avaliação de Saúde do OpenShift em clusters de produção, desenvolvimento e homologação. A análise considera aspectos de performance, segurança, recursos e operacional.
 
-**⚠️ IMPORTANTE: Este playbook executa APENAS operações de leitura e NÃO realiza nenhuma modificação no cluster OpenShift. Todas as operações são não-invasivas e o estado do cluster permanece inalterado após a execução.**
+**IMPORTANTE: Este playbook executa APENAS operações de leitura e NÃO realiza nenhuma modificação no cluster OpenShift. Todas as operações são não-invasivas e o estado do cluster permanece inalterado após a execução.**
 
 ## Visão Geral do Playbook
 
@@ -18,7 +18,7 @@ O playbook de Avaliação de Saúde do OpenShift é uma ferramenta de análise a
 
 ## Características de Segurança - Operações Somente Leitura
 
-### 🔒 **Garantias de Não-Invasividade**
+### Garantias de Não-Invasividade
 
 O playbook foi projetado com **zero operações de escrita** no cluster OpenShift:
 
@@ -30,14 +30,14 @@ O playbook foi projetado com **zero operações de escrita** no cluster OpenShif
 - `oc adm top` - Métricas de recursos (quando disponível)
 
 #### **Operações NÃO Realizadas (Escrita):**
-- ❌ `oc create` - Criação de recursos
-- ❌ `oc apply` - Aplicação de configurações
-- ❌ `oc patch` - Modificação de recursos
-- ❌ `oc delete` - Remoção de recursos
-- ❌ `oc scale` - Alteração de escala
-- ❌ `oc set` - Configuração de recursos
-- ❌ `oc expose` - Exposição de serviços
-- ❌ `oc rollout` - Deployments e rollouts
+- `oc create` - Criação de recursos (NÃO executado)
+- `oc apply` - Aplicação de configurações (NÃO executado)
+- `oc patch` - Modificação de recursos (NÃO executado)
+- `oc delete` - Remoção de recursos (NÃO executado)
+- `oc scale` - Alteração de escala (NÃO executado)
+- `oc set` - Configuração de recursos (NÃO executado)
+- `oc expose` - Exposição de serviços (NÃO executado)
+- `oc rollout` - Deployments e rollouts (NÃO executado)
 
 #### **Impacto no Estado do Cluster:**
 - **Estado Inicial**: Cluster permanece inalterado
@@ -50,7 +50,7 @@ O playbook foi projetado com **zero operações de escrita** no cluster OpenShif
 
 ### 1. Impacto na Performance do Cluster
 
-#### 🔴 **Impacto Alto - Coleta de Dados**
+#### Impacto Alto - Coleta de Dados
 
 **Operações que Impactam Performance:**
 - Execução de comandos `oc get` em massa
@@ -68,7 +68,7 @@ O playbook foi projetado com **zero operações de escrita** no cluster OpenShif
 - **Cluster Médio** (50-200 nós): 15-30 minutos
 - **Cluster Grande** (> 200 nós): 30-60 minutos
 
-#### 🟡 **Impacto Médio - Análise de Recursos**
+#### Impacto Médio - Análise de Recursos
 
 **Operações que Podem Impactar:**
 - Análise de uso de CPU e memória
@@ -82,7 +82,7 @@ O playbook foi projetado com **zero operações de escrita** no cluster OpenShif
 
 ### 2. Impacto na Segurança
 
-#### 🟢 **Impacto Baixo - Operações Seguras**
+#### Impacto Baixo - Operações Seguras
 
 **Características de Segurança:**
 - **Modo somente leitura**: Não modifica configurações
@@ -106,7 +106,7 @@ O playbook foi projetado com **zero operações de escrita** no cluster OpenShif
   verbs: ["get", "list"]
 ```
 
-#### 🔴 **Considerações de Segurança**
+#### Considerações de Segurança
 
 **Dados Sensíveis Coletados (Somente Leitura):**
 - Configurações de RBAC (metadados)
@@ -130,7 +130,7 @@ O playbook foi projetado com **zero operações de escrita** no cluster OpenShif
 
 ### 3. Impacto nos Recursos do Sistema
 
-#### 🟡 **Impacto Médio - Uso de Recursos**
+#### Impacto Médio - Uso de Recursos
 
 **Recursos Utilizados:**
 
@@ -150,7 +150,7 @@ O playbook foi projetado com **zero operações de escrita** no cluster OpenShif
 
 ### 4. Impacto Operacional
 
-#### 🟢 **Impacto Baixo - Operações Não-Invasivas**
+#### Impacto Baixo - Operações Não-Invasivas
 
 **Características Operacionais:**
 - **Não reinicia** serviços ou pods
@@ -172,7 +172,7 @@ O playbook foi projetado com **zero operações de escrita** no cluster OpenShif
 
 ### Ambiente de Produção
 
-#### ⚠️ **Considerações Especiais**
+#### Considerações Especiais
 
 **Recomendações:**
 - Executar em horários de menor utilização (madrugada)
@@ -190,7 +190,7 @@ O playbook foi projetado com **zero operações de escrita** no cluster OpenShif
 
 ### Ambiente de Homologação
 
-#### 🟢 **Execução Mais Flexível**
+#### Execução Mais Flexível
 
 **Vantagens:**
 - Menor impacto em usuários
@@ -206,7 +206,7 @@ O playbook foi projetado com **zero operações de escrita** no cluster OpenShif
 
 ### Ambiente de Desenvolvimento
 
-#### 🟢 **Execução Livre**
+#### Execução Livre
 
 **Características:**
 - Impacto mínimo
@@ -218,7 +218,7 @@ O playbook foi projetado com **zero operações de escrita** no cluster OpenShif
 
 ### Riscos Identificados
 
-#### 🔴 **Risco Alto - Sobrecarga de API**
+#### Risco Alto - Sobrecarga de API
 
 **Cenário:** Cluster com muitos recursos
 **Impacto:** Timeout de API, falha na coleta
@@ -227,7 +227,7 @@ O playbook foi projetado com **zero operações de escrita** no cluster OpenShif
 - Usar timeouts apropriados
 - Executar em batches
 
-#### 🟡 **Risco Médio - Consumo de Recursos**
+#### Risco Médio - Consumo de Recursos
 
 **Cenário:** Execução simultânea em múltiplos clusters
 **Impacto:** Sobrecarga do nó de execução
@@ -236,7 +236,7 @@ O playbook foi projetado com **zero operações de escrita** no cluster OpenShif
 - Monitorar recursos do nó
 - Implementar filas de execução
 
-#### 🟢 **Risco Baixo - Falha de Execução**
+#### Risco Baixo - Falha de Execução
 
 **Cenário:** Falha durante coleta de dados
 **Impacto:** Relatório incompleto
@@ -354,14 +354,14 @@ echo "Verificando operações somente leitura..."
 
 # Verificar se há comandos de escrita nos logs
 if grep -q "create\|apply\|patch\|delete" ansible/logs/ansible.log; then
-    echo "❌ ERRO: Operações de escrita detectadas!"
+    echo "ERRO: Operações de escrita detectadas!"
     exit 1
 else
-    echo "✅ SUCESSO: Apenas operações de leitura detectadas"
+    echo "SUCESSO: Apenas operações de leitura detectadas"
 fi
 
 # Verificar se o estado do cluster permanece inalterado
-echo "✅ SUCESSO: Cluster permanece inalterado"
+echo "SUCESSO: Cluster permanece inalterado"
 ```
 
 ## Métricas de Sucesso
@@ -384,20 +384,20 @@ echo "✅ SUCESSO: Cluster permanece inalterado"
 
 O playbook de Avaliação de Saúde do OpenShift apresenta **impacto baixo a médio** na operação de clusters, com características que o tornam adequado para execução em ambientes de produção:
 
-### ✅ **Pontos Positivos**
+### Pontos Positivos
 - **Operações somente leitura** - zero modificações no cluster
 - **Não afeta disponibilidade** - execução não-invasiva
 - **Configuração flexível** - adaptável a diferentes ambientes
 - **Relatórios abrangentes** - análise completa sem impacto
 - **Auditoria completa** - todas as operações são logadas
 
-### ⚠️ **Pontos de Atenção**
+### Pontos de Atenção
 - Consumo de recursos durante execução
 - Necessidade de permissões adequadas
 - Planejamento de janelas de execução
 - Monitoramento de performance
 
-### 🎯 **Recomendação Final**
+### Recomendação Final
 **APROVADO** para execução em produção com as seguintes condições:
 1. Execução em horários de menor utilização
 2. Monitoramento de performance durante execução
@@ -407,9 +407,9 @@ O playbook de Avaliação de Saúde do OpenShift apresenta **impacto baixo a mé
 6. **Auditoria** de todas as operações realizadas
 
 **Garantias de Segurança:**
-- ✅ **Zero operações de escrita** no cluster
-- ✅ **Estado do cluster inalterado** após execução
-- ✅ **Operações somente leitura** documentadas e auditadas
-- ✅ **Execução não-invasiva** em ambientes de produção
+- **Zero operações de escrita** no cluster
+- **Estado do cluster inalterado** após execução
+- **Operações somente leitura** documentadas e auditadas
+- **Execução não-invasiva** em ambientes de produção
 
 A ferramenta oferece valor significativo para a operação e manutenção de clusters OpenShift, com riscos controláveis, impactos previsíveis e **garantias absolutas de não-invasividade**.

@@ -15,8 +15,8 @@ Este guia explica como configurar o OpenShift Health Check quando **cada cluster
     ┌────▼────┐                ┌────▼────┐                ┌────▼────┐
     │ Bastion │                │ Bastion │                │ Bastion │
     │   Dev   │                │  Prod   │                │ Staging │
-    │timbiras │                │bastion- │                │bastion- │
-    │-bastion │                │  prod   │                │staging  │
+    │   dev   │                │bastion- │                │bastion- │
+    │         │                │  prod   │                │staging  │
     └────┬────┘                └────┬────┘                └────┬────┘
          │                          │                          │
          │                          │                          │
@@ -42,17 +42,17 @@ all:
     openshift_clusters:
       hosts:
         # Cluster de Desenvolvimento
-        development-cluster:
+        dev:
           # Bastion específico para este cluster
-          ansible_host: timbiras-bastion
+          ansible_host: dev
           ansible_user: roberto.menezes
           ansible_ssh_private_key_file: ~/.ssh/id_rsa
           
           # Configurações do cluster (acessível apenas deste bastion)
-          openshift_cluster_url: "https://api.ocp-dev.cloud.prodesp.sp.gov.br:6443"
+          openshift_cluster_url: "https://api.ocp-dev.cloud.cliente.dominio.br:6443"
           openshift_token: "sha256~token-dev"
           openshift_username: "roberto.menezes"
-          cluster_name: "development-cluster"
+          cluster_name: "timbiras"
         
         # Cluster de Produção
         production-cluster:
@@ -89,7 +89,7 @@ Certifique-se de que você tem acesso SSH a todos os bastions:
 
 ```bash
 # Testar acesso ao bastion do dev
-ssh roberto.menezes@timbiras-bastion
+ssh roberto.menezes@dev
 
 # Testar acesso ao bastion de produção
 ssh admin@bastion-prod.example.com
@@ -101,7 +101,7 @@ Configure suas chaves SSH para acesso sem senha:
 
 ```bash
 # Copiar chave pública para o bastion
-ssh-copy-id roberto.menezes@timbiras-bastion
+ssh-copy-id roberto.menezes@dev
 ssh-copy-id admin@bastion-prod.example.com
 ```
 
@@ -138,7 +138,7 @@ ansible -i inventory/hosts.yml openshift_clusters -m ping
 
 **Saída esperada:**
 ```
-development-cluster | SUCCESS => {
+dev | SUCCESS => {
     "changed": false,
     "ping": "pong"
 }
@@ -156,7 +156,7 @@ ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
 ```
 
 Isso executará:
-- No bastion `timbiras-bastion` para o cluster `development-cluster`
+- No bastion `dev` para o cluster `timbiras`
 - No bastion `bastion-prod.example.com` para o cluster `production-cluster`
 - No bastion `bastion-staging.example.com` para o cluster `staging-cluster`
 
@@ -164,10 +164,10 @@ Isso executará:
 
 ```bash
 ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
-  --limit development-cluster
+  --limit dev
 ```
 
-Isso executará apenas no bastion `timbiras-bastion` para o cluster `development-cluster`.
+Isso executará apenas no bastion `dev` para o cluster `timbiras`.
 
 ### 4. Executar em Paralelo
 
@@ -193,7 +193,7 @@ Para coletar os relatórios de volta para seu host:
 mkdir -p reports/
 
 # Copiar relatórios do bastion dev
-scp -r roberto.menezes@timbiras-bastion:/tmp/openshift_health_check/reports/* reports/
+scp -r roberto.menezes@dev:/tmp/openshift_health_check/reports/* reports/
 
 # Copiar relatórios do bastion prod
 scp -r admin@bastion-prod.example.com:/tmp/openshift_health_check/reports/* reports/
@@ -217,8 +217,8 @@ Ou use Ansible para coletar automaticamente:
 Configure `~/.ssh/config` para facilitar o acesso:
 
 ```
-Host timbiras-bastion
-    HostName timbiras-bastion
+Host dev
+    HostName dev
     User roberto.menezes
     IdentityFile ~/.ssh/id_rsa
 
@@ -236,7 +236,7 @@ Host bastion-staging
 Então no inventário você pode usar apenas:
 
 ```yaml
-ansible_host: timbiras-bastion  # Usa a configuração do ~/.ssh/config
+ansible_host: dev  # Usa a configuração do ~/.ssh/config
 ```
 
 ### Usando Diferentes Chaves SSH
@@ -244,8 +244,8 @@ ansible_host: timbiras-bastion  # Usa a configuração do ~/.ssh/config
 Se cada bastion usa uma chave SSH diferente:
 
 ```yaml
-development-cluster:
-  ansible_host: timbiras-bastion
+dev:
+  ansible_host: dev
   ansible_user: roberto.menezes
   ansible_ssh_private_key_file: ~/.ssh/id_rsa_dev
 
@@ -262,7 +262,7 @@ production-cluster:
 **Solução:**
 ```bash
 # Adicionar bastions ao known_hosts
-ssh-keyscan timbiras-bastion >> ~/.ssh/known_hosts
+ssh-keyscan dev >> ~/.ssh/known_hosts
 ssh-keyscan bastion-prod.example.com >> ~/.ssh/known_hosts
 ```
 
@@ -279,10 +279,10 @@ host_key_checking = False
 **Solução:**
 ```bash
 # Verificar se a chave está sendo usada
-ssh -v roberto.menezes@timbiras-bastion
+ssh -v roberto.menezes@dev
 
 # Copiar chave pública
-ssh-copy-id -i ~/.ssh/id_rsa.pub roberto.menezes@timbiras-bastion
+ssh-copy-id -i ~/.ssh/id_rsa.pub roberto.menezes@dev
 ```
 
 ### Erro: "No route to host"
@@ -292,8 +292,8 @@ ssh-copy-id -i ~/.ssh/id_rsa.pub roberto.menezes@timbiras-bastion
 **Solução:**
 ```bash
 # Testar conectividade
-ping timbiras-bastion
-telnet timbiras-bastion 22
+ping dev
+telnet dev 22
 ```
 
 ### Erro: "Playbook não encontrado no bastion"
@@ -315,7 +315,7 @@ ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
 
 # 3. Coletar relatórios
 mkdir -p reports/
-for cluster in development-cluster production-cluster staging-cluster; do
+for cluster in dev production-cluster staging-cluster; do
   bastion=$(ansible-inventory -i inventory/hosts.yml --host $cluster | jq -r '.ansible_host')
   user=$(ansible-inventory -i inventory/hosts.yml --host $cluster | jq -r '.ansible_user')
   scp -r ${user}@${bastion}:/tmp/openshift_health_check/reports/* reports/ 2>/dev/null || true

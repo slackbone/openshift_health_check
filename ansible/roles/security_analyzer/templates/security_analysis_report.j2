@@ -16,11 +16,11 @@
 
 | Componente | Status |
 |------------|--------|
-| Análise RBAC | {{ '✓ Sucesso' if security_analysis_status.get('rbac_analysis', false) else '✗ Falhou' }} |
-| Segurança de Rede | {{ '✓ Sucesso' if security_analysis_status.get('network_security_analysis', false) else '✗ Falhou' }} |
-| Segurança de Pods | {{ '✓ Sucesso' if security_analysis_status.get('pod_security', false) else '✗ Falhou' }} |
-| Gerenciamento de Segredos | {{ '✓ Sucesso' if security_analysis_status.get('secrets_management_analysis', false) else '✗ Falhou' }} |
-| Análise de Conformidade | {{ '✓ Sucesso' if security_analysis_status.get('compliance_analysis', false) else '✗ Falhou' }} |
+| Análise RBAC | {{ 'Sucesso' if security_analysis_status.get('rbac_analysis', false) else 'Falhou' }} |
+| Segurança de Rede | {{ 'Sucesso' if security_analysis_status.get('network_security_analysis', false) else 'Falhou' }} |
+| Segurança de Pods | {{ 'Sucesso' if security_analysis_status.get('pod_security', false) else 'Falhou' }} |
+| Gerenciamento de Segredos | {{ 'Sucesso' if security_analysis_status.get('secrets_management_analysis', false) else 'Falhou' }} |
+| Análise de Conformidade | {{ 'Sucesso' if security_analysis_status.get('compliance_analysis', false) else 'Falhou' }} |
 
 ## Análise RBAC
 
@@ -36,25 +36,25 @@
 {% if rbac_analysis.get('excessive_permissions', []) | length > 0 %}
 ### Permissões Excessivas
 {% for permission in rbac_analysis.get('excessive_permissions', []) %}
-- ⚠️ {{ permission }}
+- AVISO: {{ permission }}
 {% endfor %}
 {% endif %}
 
 {% if rbac_analysis.get('privileged_accounts', []) | length > 0 %}
 ### Contas Privilegiadas
 {% for account in rbac_analysis.get('privileged_accounts', []) %}
-- ⚠️ {{ account }}
+- AVISO: {{ account }}
 {% endfor %}
 {% endif %}
 
 {% if rbac_analysis.get('issues', []) | length > 0 %}
 ### Problemas RBAC
 {% for issue in rbac_analysis.get('issues', []) %}
-- ⚠️ {{ issue }}
+- AVISO: {{ issue }}
 {% endfor %}
 {% endif %}
 {% else %}
-❌ Análise RBAC falhou
+ERRO: Análise RBAC falhou
 {% endif %}
 
 ## Análise de Segurança de Pods
@@ -72,11 +72,11 @@
 {% if pod_security.get('pod_security_issues', []) | length > 0 %}
 ### Problemas de Segurança de Pods
 {% for issue in pod_security.get('pod_security_issues', []) %}
-- ⚠️ {{ issue }}
+- AVISO: {{ issue }}
 {% endfor %}
 {% endif %}
 {% else %}
-❌ Análise de segurança de pods falhou
+ERRO: Análise de segurança de pods falhou
 {% endif %}
 
 ## Recomendações de Segurança
@@ -111,13 +111,13 @@
 
 {% set security_score_int = (security_analysis.get('overall_security_score', 0) | int) if security_analysis is defined else 0 %}
 {% if security_score_int >= 90 %}
-🟢 **Excelente** - A segurança do cluster está bem configurada
+**Excelente** - A segurança do cluster está bem configurada
 {% elif security_score_int >= 70 %}
-🟡 **Bom** - Algumas melhorias de segurança recomendadas
+**Bom** - Algumas melhorias de segurança recomendadas
 {% elif security_score_int >= 50 %}
-🟠 **Regular** - Várias questões de segurança precisam de atenção
+**Regular** - Várias questões de segurança precisam de atenção
 {% else %}
-🔴 **Ruim** - Melhorias significativas de segurança necessárias
+**Ruim** - Melhorias significativas de segurança necessárias
 {% endif %}
 
 ## Estatísticas da Análise
@@ -139,9 +139,9 @@
 ## Notas
 
 {% if success_count < total_count %}
-⚠️ **Aviso:** Algumas tarefas de análise de segurança falharam. A análise pode estar incompleta.
+**AVISO:** Algumas tarefas de análise de segurança falharam. A análise pode estar incompleta.
 {% else %}
-✅ **Sucesso:** Todas as tarefas de análise de segurança foram concluídas com sucesso.
+**SUCESSO:** Todas as tarefas de análise de segurança foram concluídas com sucesso.
 {% endif %}
 
 Este relatório foi gerado automaticamente pelo playbook de Verificação de Saúde OpenShift do Ansible.

@@ -74,11 +74,11 @@
           Security analysis completed!
           
           Analysis Status:
-          - RBAC Analysis: {{ '✓' if (security_analysis_status.get('rbac_analysis', false) | bool) else '✗' }}
-          - Network Security: {{ '✓' if (security_analysis_status.get('network_security_analysis', false) | bool) else '✗' }}
-          - Pod Security: {{ '✓' if (security_analysis_status.get('pod_security', false) | bool) else '✗' }}
-          - Secrets Management: {{ '✓' if (security_analysis_status.get('secrets_management_analysis', false) | bool) else '✗' }}
-          - Compliance Analysis: {{ '✓' if (security_analysis_status.get('compliance_analysis', false) | bool) else '✗' }}
+          - RBAC Analysis: {{ 'OK' if (security_analysis_status.get('rbac_analysis', false) | bool) else 'Falhou' }}
+          - Network Security: {{ 'OK' if (security_analysis_status.get('network_security_analysis', false) | bool) else 'Falhou' }}
+          - Pod Security: {{ 'OK' if (security_analysis_status.get('pod_security', false) | bool) else 'Falhou' }}
+          - Secrets Management: {{ 'OK' if (security_analysis_status.get('secrets_management_analysis', false) | bool) else 'Falhou' }}
+          - Compliance Analysis: {{ 'OK' if (security_analysis_status.get('compliance_analysis', false) | bool) else 'Falhou' }}
           
           Overall Security Score: {{ security_score }}/100
           Analysis saved to: {{ security_output_dir }}

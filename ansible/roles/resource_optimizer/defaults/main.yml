@@ -5,7 +5,7 @@
 analyze_cpu_utilization: true
 analyze_memory_utilization: true
 analyze_storage_utilization: true
-analyze_cost_optimization: true
+analyze_cost_optimization: false  # FinOps disabled by default
 analyze_node_optimization: true
 analyze_service_optimization: true
 
@@ -19,8 +19,8 @@ memory_utilization_threshold: 70
 storage_utilization_threshold: 80
 node_utilization_threshold: 60
 
-# Cost analysis settings
-enable_cost_analysis: true
+# Cost analysis settings (disabled by default)
+enable_cost_analysis: false
 cost_per_cpu_hour: 0.05
 cost_per_memory_gb_hour: 0.01
 cost_per_storage_gb_month: 0.10

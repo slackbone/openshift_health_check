@@ -126,10 +126,10 @@ A simulação gera:
 - **Relatórios Markdown** para análise técnica
 
 **Vantagens da Simulação:**
-- ✅ Testa a estrutura dos relatórios sem cluster real
-- ✅ Valida o design e layout dos templates HTML
-- ✅ Demonstra as funcionalidades da ferramenta
-- ✅ Permite análise dos relatórios antes da execução real
+- Testa a estrutura dos relatórios sem cluster real
+- Valida o design e layout dos templates HTML
+- Demonstra as funcionalidades da ferramenta
+- Permite análise dos relatórios antes da execução real
 
 Para mais detalhes, consulte: **[Guia de Simulação](SIMULACAO.md)**
 
@@ -189,33 +189,25 @@ ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
 ./examples/run_health_check_multiple_clusters.sh -l
 ```
 
-### Método 4: Execução SEM FinOps (Recomendado para Foco em Segurança/Arquitetura)
+### Método 4: Nota sobre Análise de Custos (FinOps)
 
-Para executar a avaliação **excluindo funcionalidades de FinOps** (análise de custos):
+**Importante:** A análise de custos (FinOps) está **desabilitada por padrão** no playbook. As variáveis `analyze_cost_optimization` e `enable_cost_analysis` são `false` por padrão.
+
+Se você precisar garantir explicitamente que nenhuma análise de custos seja executada, pode usar os scripts de exemplo:
 
 ```bash
-# Execução completa sem FinOps
+# Execução completa (FinOps já está desabilitado por padrão)
 ./examples/executar_sem_finops.sh \
   -u https://api.cluster.example.com:6443 \
   -t sha256~seu-token-aqui \
   -n production-cluster
 
-# Execução em múltiplos clusters sem FinOps
+# Execução em múltiplos clusters (FinOps já está desabilitado por padrão)
 ./examples/executar_multiplos_clusters_sem_finops.sh \
   -c examples/multiple_clusters_config_sem_finops.yml
-
-# Apenas análise de segurança (sem FinOps)
-./examples/executar_sem_finops.sh \
-  -u https://api.cluster.example.com:6443 \
-  -t sha256~seu-token-aqui \
-  --tags seguranca
 ```
 
-**Vantagens da execução sem FinOps:**
-- ✅ **Foco em Segurança e Arquitetura** - Análise mais rápida e direcionada
-- ✅ **Menor Impacto** - Reduz tempo de execução e uso de recursos
-- ✅ **Relatórios Limpos** - Sem seções de análise de custos
-- ✅ **Ideal para Auditorias** - Foco em conformidade e boas práticas
+**Nota:** Os scripts acima são úteis apenas se você tiver habilitado análise de custos em algum lugar e quiser garantir explicitamente que está desabilitada. Por padrão, o playbook não executa análise de custos.
 
 Para mais detalhes, consulte: **[Exemplos SEM FinOps](ansible/examples/README_SEM_FINOPS.md)**
 
@@ -271,8 +263,9 @@ all:
           ansible_host: bastion.example.com
           ansible_user: admin
           openshift_cluster_url: "https://api.cluster1.example.com:6443"
-          openshift_token: "your-token-here"
+          openshift_token: "sha256~your-token-here"
           openshift_username: "usuario@example.com"
+          cluster_name: "cluster1"
 ```
 
 **Nota:** O playbook gera automaticamente o arquivo `kubeconfig` dentro do diretório `ansible/.kube/config` usando o usuário e token fornecidos. Não é necessário ter um kubeconfig pré-existente. Para mais detalhes, consulte: **[Geração Dinâmica de Kubeconfig](ansible/inventory/KUBECONFIG_DINAMICO.md)**
@@ -419,7 +412,7 @@ ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
 
 #### 5.1 Execução em múltiplos clusters via Ansible diretamente
 
-Usando o inventário `ansible/inventory/hosts_multiplos_clusters.yml` (ou `hosts.yml` configurado com o grupo `openshift_clusters`):
+Usando o inventário `ansible/inventory/hosts.yml` configurado com o grupo `openshift_clusters`:
 
 ```bash
 cd ansible
@@ -442,29 +435,18 @@ ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
   --forks 5
 ```
 
-#### 5.2 Execução em múltiplos clusters SEM FinOps (sem análise de custos)
+#### 5.2 Nota sobre Análise de Custos (FinOps)
 
-Para garantir que nenhuma análise de custos seja executada (FinOps desativado):
+**Importante:** A análise de custos (FinOps) está **desabilitada por padrão** no playbook. As variáveis `analyze_cost_optimization` e `enable_cost_analysis` são `false` por padrão.
+
+Se você precisar garantir explicitamente que nenhuma análise de custos seja executada:
 
 ```bash
 cd ansible
 
-# Em todos os clusters, desabilitando análise de custos
+# Garantir que análise de custos está desabilitada (já é o padrão)
 ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
   --limit openshift_clusters \
-  -e analyze_cost_optimization=false \
-  -e enable_cost_analysis=false
-
-# Apenas em um cluster específico, sem FinOps
-ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
-  --limit production-cluster \
-  -e analyze_cost_optimization=false \
-  -e enable_cost_analysis=false
-
-# Em múltiplos clusters, apenas segurança e arquitetura, sem FinOps
-ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
-  --limit "production-cluster,staging-cluster" \
-  --tags "seguranca,arquitetura" \
   -e analyze_cost_optimization=false \
   -e enable_cost_analysis=false
 ```

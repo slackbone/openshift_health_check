@@ -47,16 +47,16 @@ report_sections:
 
 # Priority levels for recommendations
 priority_levels:
-  high: "🔴 Alta Prioridade"
-  medium: "🟡 Média Prioridade"
-  low: "🟢 Baixa Prioridade"
+  high: "Alta Prioridade"
+  medium: "Média Prioridade"
+  low: "Baixa Prioridade"
 
 # Status indicators
 status_indicators:
-  excellent: "🟢 Excelente"
-  good: "🟡 Bom"
-  warning: "🟠 Atenção"
-  critical: "🔴 Crítico"
-  success: "✅ Sucesso"
-  failure: "❌ Falha"
-  pending: "⏳ Pendente"
+  excellent: "Excelente"
+  good: "Bom"
+  warning: "Atenção"
+  critical: "Crítico"
+  success: "Sucesso"
+  failure: "Falha"
+  pending: "Pendente"

@@ -1,0 +1,39 @@
+---
+# Resource Optimizer Role - Main Tasks
+# Este role analisa uso de recursos e identifica oportunidades de otimização
+
+- name: Include CPU utilization analysis tasks
+  include_tasks: analyze_cpu_utilization.yml
+  when: analyze_cpu_utilization | bool
+  tags: ['resource_optimization', 'cpu']
+
+- name: Include memory utilization analysis tasks
+  include_tasks: analyze_memory_utilization.yml
+  when: analyze_memory_utilization | bool
+  tags: ['resource_optimization', 'memory']
+
+- name: Include storage utilization analysis tasks
+  include_tasks: analyze_storage_utilization.yml
+  when: analyze_storage_utilization | bool
+  tags: ['resource_optimization', 'storage']
+
+- name: Include node optimization analysis tasks
+  include_tasks: analyze_node_optimization.yml
+  when: analyze_node_optimization | bool
+  tags: ['resource_optimization', 'nodes']
+
+- name: Include service optimization analysis tasks
+  include_tasks: analyze_service_optimization.yml
+  when: analyze_service_optimization | bool
+  tags: ['resource_optimization', 'services']
+
+- name: Include cost optimization analysis tasks (if enabled)
+  include_tasks: analyze_cost_optimization.yml
+  when: 
+    - analyze_cost_optimization | bool
+    - enable_cost_analysis | bool
+  tags: ['resource_optimization', 'cost']
+
+- name: Consolidate resource optimization analysis
+  include_tasks: consolidate_analysis.yml
+  tags: ['resource_optimization', 'consolidation']

@@ -7,7 +7,6 @@ Este diretório contém os arquivos de inventário para o OpenShift Health Check
 - **`hosts.yml`** - Arquivo principal de inventário (use este)
 - **`hosts.yml.example`** - Exemplo completo com todas as opções
 - **`hosts.yml.simple`** - Exemplo mínimo e direto ao ponto
-- **`hosts_multiplos_clusters.yml`** - Exemplo específico para múltiplos clusters
 - **`GUIA_MULTIPLOS_CLUSTERS.md`** - Guia completo para múltiplos clusters
 
 ## Configuração Rápida
@@ -25,10 +24,11 @@ cp inventory/hosts.yml.simple inventory/hosts.yml
 ./ansible/inventory/configurar_multiplos_clusters.sh
 
 # Opção 2: Copiar manualmente
-cp inventory/hosts_multiplos_clusters.yml inventory/hosts.yml
+cp inventory/hosts.yml.example inventory/hosts.yml
+# Depois edite hosts.yml e descomente a seção openshift_clusters
 ```
 
-📖 **Consulte o [Guia de Múltiplos Clusters](./GUIA_MULTIPLOS_CLUSTERS.md) para mais detalhes.**
+**Consulte o [Guia de Múltiplos Clusters](./GUIA_MULTIPLOS_CLUSTERS.md) para mais detalhes.**
 
 ### Passo 2: Edite o arquivo `hosts.yml`
 
@@ -166,7 +166,7 @@ all:
 | `openshift_context` | Contexto do Kubernetes | - |
 | `collect_metrics` | Coletar métricas | `true` |
 | `collect_events` | Coletar eventos | `true` |
-| `analyze_cost_optimization` | Analisar custos | `false` |
+| `analyze_cost_optimization` | Analisar custos (desabilitado por padrão) | `false` |
 
 **Importante:** Se você fornecer `kubeconfig_path` via `-e`, o playbook usará esse arquivo ao invés de gerar um novo. Caso contrário, o kubeconfig será gerado automaticamente em `ansible/.kube/config` usando o usuário e token fornecidos.
 | `max_privileged_containers` | Máximo de containers privilegiados | `0` |
@@ -285,7 +285,7 @@ Após configurar o inventário:
 Se você tem vários clusters, consulte o guia completo:
 
 - **[Guia de Múltiplos Clusters](./GUIA_MULTIPLOS_CLUSTERS.md)** - Guia detalhado
-- **[Exemplo de Inventário](./hosts_multiplos_clusters.yml)** - Arquivo de exemplo
+- **[Exemplo de Inventário](./hosts.yml.example)** - Arquivo de exemplo
 
 ### Execução Rápida em Múltiplos Clusters:
 

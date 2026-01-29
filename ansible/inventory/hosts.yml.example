@@ -111,9 +111,10 @@ all:
           # ================================================================
           # CONFIGURAÇÕES DE FINOPS (Análise de Custos)
           # ================================================================
-          # Desabilite estas opções se não quiser análise de custos
-          analyze_cost_optimization: true
-          enable_cost_analysis: true
+          # NOTA: Análise de custos está DESABILITADA por padrão
+          # Se você quiser habilitar análise de custos, descomente e defina como true
+          # analyze_cost_optimization: false  # Padrão: false (desabilitado)
+          # enable_cost_analysis: false        # Padrão: false (desabilitado)
 
     # ========================================================================
     # MÚLTIPLOS CLUSTERS COM BASTIONS DEDICADOS

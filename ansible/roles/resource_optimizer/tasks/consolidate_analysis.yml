@@ -1,0 +1,44 @@
+---
+- name: Consolidate resource optimization analysis
+  block:
+    - name: Initialize resource_optimization_analysis if not exists
+      set_fact:
+        resource_optimization_analysis: {}
+      when: resource_optimization_analysis is not defined
+
+    - name: Ensure resource_optimization_analysis is defined
+      set_fact:
+        resource_optimization_analysis: "{{ resource_optimization_analysis | default({}) }}"
+
+    - name: Create resource optimization analysis output directory
+      file:
+        path: "{{ resource_optimization_output_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Save resource optimization analysis results
+      copy:
+        content: "{{ resource_optimization_analysis | to_nice_json }}"
+        dest: "{{ resource_optimization_output_dir }}/resource_optimization_analysis.json"
+        mode: '0644'
+
+    - name: Set fact for resource optimization analysis completion
+      set_fact:
+        resource_optimization_analysis_completed: true
+        resource_optimization_analysis_path: "{{ resource_optimization_output_dir }}"
+
+    - name: Display resource optimization analysis summary
+      debug:
+        msg: |
+          Resource optimization analysis completed!
+          
+          Analysis saved to: {{ resource_optimization_output_dir }}
+
+  rescue:
+    - name: Handle resource optimization analysis consolidation failure
+      debug:
+        msg: "Failed to consolidate resource optimization analysis: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for resource optimization analysis completion
+      set_fact:
+        resource_optimization_analysis_completed: false

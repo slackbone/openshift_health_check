@@ -1,0 +1,44 @@
+---
+- name: Consolidate best practices analysis
+  block:
+    - name: Initialize best_practices_analysis if not exists
+      set_fact:
+        best_practices_analysis: {}
+      when: best_practices_analysis is not defined
+
+    - name: Ensure best_practices_analysis is defined
+      set_fact:
+        best_practices_analysis: "{{ best_practices_analysis | default({}) }}"
+
+    - name: Create best practices analysis output directory
+      file:
+        path: "{{ best_practices_output_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Save best practices analysis results
+      copy:
+        content: "{{ best_practices_analysis | to_nice_json }}"
+        dest: "{{ best_practices_output_dir }}/best_practices_analysis.json"
+        mode: '0644'
+
+    - name: Set fact for best practices analysis completion
+      set_fact:
+        best_practices_analysis_completed: true
+        best_practices_analysis_path: "{{ best_practices_output_dir }}"
+
+    - name: Display best practices analysis summary
+      debug:
+        msg: |
+          Best practices analysis completed!
+          
+          Analysis saved to: {{ best_practices_output_dir }}
+
+  rescue:
+    - name: Handle best practices analysis consolidation failure
+      debug:
+        msg: "Failed to consolidate best practices analysis: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for best practices analysis completion
+      set_fact:
+        best_practices_analysis_completed: false
