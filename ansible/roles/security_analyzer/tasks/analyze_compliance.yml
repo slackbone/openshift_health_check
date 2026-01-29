@@ -1,0 +1,85 @@
+---
+- name: Analyze compliance
+  block:
+    - name: Set default compliance analysis
+      set_fact:
+        compliance_analysis:
+          rbac_compliance:
+            excessive_permissions: []
+            privileged_accounts: []
+          security_compliance:
+            security_issues: []
+            pod_security_issues: []
+          network_compliance:
+            network_policy_coverage: "Unknown"
+            missing_policies: []
+          overall_compliance_score: 0
+          compliance_issues: ["Compliance analysis limited - detailed compliance data not collected"]
+
+    - name: Consolidate compliance from existing analyses
+      set_fact:
+        compliance_analysis:
+          rbac_compliance:
+            excessive_permissions: "{{ excessive_permissions | default([]) }}"
+            privileged_accounts: "{{ privileged_accounts | default([]) }}"
+          security_compliance:
+            security_issues: "{{ pod_security_issues | default([]) }}"
+            pod_security_issues: "{{ pod_security_issues | default([]) }}"
+          network_compliance:
+            network_policy_coverage: "{{ 'Good' if (network_security_analysis.network_policies.total_policies | default(0) | int) > 0 else 'Poor' }}"
+            missing_policies: "{{ [] if (network_security_analysis.network_policies.total_policies | default(0) | int) > 0 else ['No network policies detected'] }}"
+          overall_compliance_score: "{{ 100 - ((excessive_permissions | default([]) | length) * 10 + (pod_security_issues | default([]) | length) * 5) }}"
+          compliance_issues: []
+
+    - name: Check for compliance issues
+      set_fact:
+        compliance_issues_list: []
+
+    - name: Evaluate compliance
+      block:
+        - name: Check for excessive RBAC permissions
+          set_fact:
+            compliance_issues_list: "{{ compliance_issues_list + ['Excessive RBAC permissions detected'] }}"
+          when: (excessive_permissions | default([]) | length) > 0
+
+        - name: Check for privileged service accounts
+          set_fact:
+            compliance_issues_list: "{{ compliance_issues_list + ['Privileged service accounts detected'] }}"
+          when: (privileged_accounts | default([]) | length) > 0
+
+        - name: Check for pod security issues
+          set_fact:
+            compliance_issues_list: "{{ compliance_issues_list + ['Pod security issues detected'] }}"
+          when: (pod_security_issues | default([]) | length) > 0
+
+        - name: Check for missing network policies
+          set_fact:
+            compliance_issues_list: "{{ compliance_issues_list + ['Missing network policies'] }}"
+          when: (network_security_analysis.network_policies.total_policies | default(0) | int) == 0
+
+    - name: Update compliance analysis with issues
+      set_fact:
+        compliance_analysis: "{{ compliance_analysis | combine({'compliance_issues': compliance_issues_list | default([])}) }}"
+
+    - name: Update security analysis with compliance
+      set_fact:
+        security_analysis: "{{ security_analysis | default({}) | combine({'compliance': compliance_analysis}) }}"
+
+    - name: Set fact for compliance analysis status
+      set_fact:
+        analysis_status:
+          compliance_analysis: true
+
+    - name: Display compliance analysis status
+      debug:
+        msg: "Compliance analysis completed successfully"
+
+  rescue:
+    - name: Handle compliance analysis failure
+      debug:
+        msg: "Failed to analyze compliance: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for compliance analysis status
+      set_fact:
+        analysis_status:
+          compliance_analysis: false

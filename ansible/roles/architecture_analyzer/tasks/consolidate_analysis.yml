@@ -1,6 +1,21 @@
 ---
 - name: Consolidate architecture analysis
   block:
+    - name: Initialize architecture_analysis if not exists
+      set_fact:
+        architecture_analysis: {}
+      when: architecture_analysis is not defined
+
+    - name: Ensure architecture_analysis is defined
+      set_fact:
+        architecture_analysis: "{{ architecture_analysis | default({}) }}"
+
+    - name: Ensure cluster_overview exists in architecture_analysis
+      set_fact:
+        architecture_analysis: "{{ architecture_analysis | combine({'cluster_overview': (architecture_analysis.get('cluster_overview', {'cluster_version': 'Unknown', 'total_nodes': 0, 'master_nodes': 0, 'worker_nodes': 0, 'infrastructure_nodes': 0, 'cluster_health': 'Unknown', 'issues': [], 'total_namespaces': 0}))}) }}"
+      vars:
+        cluster_overview_default: {'cluster_version': 'Unknown', 'total_nodes': 0, 'master_nodes': 0, 'worker_nodes': 0, 'infrastructure_nodes': 0, 'cluster_health': 'Unknown', 'issues': [], 'total_namespaces': 0}
+
     - name: Create architecture analysis output directory
       file:
         path: "{{ architecture_output_dir }}"
@@ -13,11 +28,17 @@
         dest: "{{ architecture_output_dir }}/architecture_analysis.json"
         mode: '0644'
 
+    - name: Ensure cluster_overview exists before template rendering
+      set_fact:
+        architecture_analysis: "{{ architecture_analysis | combine({'cluster_overview': architecture_analysis.get('cluster_overview', {'cluster_version': 'Unknown', 'total_nodes': 0, 'master_nodes': 0, 'worker_nodes': 0, 'infrastructure_nodes': 0, 'cluster_health': 'Unknown', 'issues': [], 'total_namespaces': 0})}) }}"
+
     - name: Create architecture analysis report
       template:
         src: architecture_analysis_report.j2
         dest: "{{ architecture_output_dir }}/architecture_analysis_report.md"
         mode: '0644'
+      when: not ansible_check_mode | bool
+      ignore_errors: true
 
     - name: Set fact for architecture analysis completion
       set_fact:
@@ -43,6 +64,10 @@
     - name: Handle architecture analysis consolidation failure
       debug:
         msg: "Failed to consolidate architecture analysis: {{ ansible_failed_result.msg }}"
+      
+    - name: Ensure cluster_overview exists even on failure
+      set_fact:
+        architecture_analysis: "{{ architecture_analysis | default({}) | combine({'cluster_overview': architecture_analysis.get('cluster_overview', {'cluster_version': 'Unknown', 'total_nodes': 0, 'master_nodes': 0, 'worker_nodes': 0, 'infrastructure_nodes': 0, 'cluster_health': 'Unknown', 'issues': ['Analysis failed'], 'total_namespaces': 0})}) }}"
       
     - name: Set fact for architecture analysis completion
       set_fact:

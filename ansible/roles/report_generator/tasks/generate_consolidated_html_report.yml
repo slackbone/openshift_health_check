@@ -3,6 +3,10 @@
   template:
     src: consolidated_health_check_report.html
     dest: "{{ reports_output_dir }}/html/consolidated/consolidated_health_check_report.html"
+  when: 
+    - generate_html_reports | default(true) | bool
+    - not ansible_check_mode | bool
+  ignore_errors: true
   vars:
     report_title: "Relatório Consolidado de Verificação de Saúde"
     generation_timestamp: "{{ ansible_date_time.iso8601 }}"

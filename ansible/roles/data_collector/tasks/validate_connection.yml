@@ -30,7 +30,10 @@
 - name: Fail if neither oc nor kubectl is available
   fail:
     msg: "Neither 'oc' nor 'kubectl' command is available. Please install OpenShift CLI or Kubernetes CLI."
-  when: (oc_check is defined and oc_check.stdout is defined and oc_check.stdout == "not_found") and (kubectl_check is defined and kubectl_check.stdout is defined and kubectl_check.stdout == "not_found")
+  when: >
+    (oc_check is defined and oc_check is mapping and oc_check.stdout is defined and oc_check.stdout == "not_found")
+    and
+    (kubectl_check is defined and kubectl_check is mapping and kubectl_check.stdout is defined and kubectl_check.stdout == "not_found")
 
 - name: Set fact for CLI command
   set_fact:

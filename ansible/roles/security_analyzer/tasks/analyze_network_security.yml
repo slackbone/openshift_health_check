@@ -1,0 +1,93 @@
+---
+- name: Analyze network security
+  block:
+    - name: Set default network security analysis
+      set_fact:
+        network_security_analysis:
+          network_policies:
+            total_policies: 0
+            policies_by_namespace: {}
+          ingress_controllers:
+            total_controllers: 0
+            controllers_list: []
+          issues: ["Network security analysis limited - detailed network data not collected"]
+
+    - name: Load network-related data
+      include_vars:
+        file: "{{ data_output_path }}/raw_data/services.json"
+        name: services_data
+      when: 
+        - data_collection_completed | bool
+        - not ansible_check_mode | bool
+      ignore_errors: true
+
+    - name: Load security configs for network policies
+      include_vars:
+        file: "{{ data_output_path }}/raw_data/security_configs.json"
+        name: security_data
+      when: 
+        - data_collection_completed | bool
+        - not ansible_check_mode | bool
+      ignore_errors: true
+
+    - name: Set default network data if not available
+      set_fact:
+        services_data:
+          services_json: '{"items": []}'
+          ingresses_json: '{"items": []}'
+        security_data:
+          networkpolicies_json: '{"items": []}'
+      when: (services_data is not defined) or (security_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool)
+
+    - name: Parse network security data
+      set_fact:
+        ingresses_list_raw: "{{ services_data.ingresses_json | default('{\"items\": []}') | from_json }}"
+        network_policies_list_raw: "{{ security_data.networkpolicies_json | default('{\"items\": []}') | from_json }}"
+      when: services_data is defined and security_data is defined
+
+    - name: Ensure network lists are dicts with items
+      set_fact:
+        ingresses_list: "{{ ingresses_list_raw | default({'items': []}) }}"
+        network_policies_list: "{{ network_policies_list_raw | default({'items': []}) }}"
+        ingresses_list_items: "{{ (ingresses_list.get('items', [])) if (ingresses_list is mapping) else [] }}"
+        network_policies_list_items: "{{ (network_policies_list.get('items', [])) if (network_policies_list is mapping) else [] }}"
+        network_policies_list_items_filtered: "{{ network_policies_list_items | select('mapping') | list }}"
+
+    - name: Analyze network policies
+      set_fact:
+        network_security_analysis:
+          network_policies:
+            total_policies: "{{ network_policies_list_items_filtered | length }}"
+            policies_by_namespace: "{{ network_policies_list_items_filtered | groupby('metadata.namespace') | map('first') | list }}"
+          ingress_controllers:
+            total_controllers: "{{ ingresses_list_items | length }}"
+            controllers_list: "{{ ingresses_list_items }}"
+          issues: []
+
+    - name: Check for missing network policies
+      set_fact:
+        network_security_analysis: "{{ network_security_analysis | combine({'issues': network_security_analysis.issues + ['No network policies detected in cluster']}) }}"
+      when: network_policies_list_items | length == 0
+
+    - name: Update security analysis with network security
+      set_fact:
+        security_analysis: "{{ security_analysis | default({}) | combine({'network_security': network_security_analysis}) }}"
+
+    - name: Set fact for network security analysis status
+      set_fact:
+        analysis_status:
+          network_security_analysis: true
+
+    - name: Display network security analysis status
+      debug:
+        msg: "Network security analysis completed successfully"
+
+  rescue:
+    - name: Handle network security analysis failure
+      debug:
+        msg: "Failed to analyze network security: {{ ansible_failed_result.msg }}"
+      
+    - name: Set fact for network security analysis status
+      set_fact:
+        analysis_status:
+          network_security_analysis: false

@@ -1,49 +1,55 @@
 # Verificação de Saúde OpenShift - Relatório de Análise de Segurança
 
+{% set rbac_analysis = security_analysis.get('rbac_analysis', {}) if security_analysis is defined else {} %}
+{% set pod_security = security_analysis.get('pod_security', {}) if security_analysis is defined else {} %}
+{% set network_security = security_analysis.get('network_security', {}) if security_analysis is defined else {} %}
+{% set secrets_management = security_analysis.get('secrets_management', {}) if security_analysis is defined else {} %}
+{% set compliance = security_analysis.get('compliance', {}) if security_analysis is defined else {} %}
+
 ## Resumo da Análise
 
-**Timestamp da Análise:** {{ security_analysis.analysis_timestamp }}  
-**URL do Cluster:** {{ security_analysis.cluster_url }}  
-**Pontuação Geral de Segurança:** {{ security_analysis.overall_security_score }}/100  
+**Timestamp da Análise:** {{ security_analysis.get('analysis_timestamp', 'Unknown') if security_analysis is defined else 'Unknown' }}  
+**URL do Cluster:** {{ security_analysis.get('cluster_url', 'N/A') if security_analysis is defined else 'N/A' }}  
+**Pontuação Geral de Segurança:** {{ security_analysis.get('overall_security_score', 0) if security_analysis is defined else 0 }}/100  
 
 ## Status da Análise
 
 | Componente | Status |
 |------------|--------|
-| Análise RBAC | {{ '✓ Sucesso' if security_analysis_status.rbac_analysis else '✗ Falhou' }} |
-| Segurança de Rede | {{ '✓ Sucesso' if security_analysis_status.network_security else '✗ Falhou' }} |
-| Segurança de Pods | {{ '✓ Sucesso' if security_analysis_status.pod_security else '✗ Falhou' }} |
-| Gerenciamento de Segredos | {{ '✓ Sucesso' if security_analysis_status.secrets_management else '✗ Falhou' }} |
-| Análise de Conformidade | {{ '✓ Sucesso' if security_analysis_status.compliance_analysis else '✗ Falhou' }} |
+| Análise RBAC | {{ '✓ Sucesso' if security_analysis_status.get('rbac_analysis', false) else '✗ Falhou' }} |
+| Segurança de Rede | {{ '✓ Sucesso' if security_analysis_status.get('network_security_analysis', false) else '✗ Falhou' }} |
+| Segurança de Pods | {{ '✓ Sucesso' if security_analysis_status.get('pod_security', false) else '✗ Falhou' }} |
+| Gerenciamento de Segredos | {{ '✓ Sucesso' if security_analysis_status.get('secrets_management_analysis', false) else '✗ Falhou' }} |
+| Análise de Conformidade | {{ '✓ Sucesso' if security_analysis_status.get('compliance_analysis', false) else '✗ Falhou' }} |
 
 ## Análise RBAC
 
-{% if security_analysis_status.rbac_analysis %}
-- **Total de Roles do Cluster:** {{ security_analysis.rbac_analysis.cluster_roles.total_cluster_roles }}
-- **Roles de Administrador do Cluster:** {{ security_analysis.rbac_analysis.cluster_roles.cluster_admin_roles }}
-- **Roles do Sistema:** {{ security_analysis.rbac_analysis.cluster_roles.system_roles }}
-- **Roles Personalizados:** {{ security_analysis.rbac_analysis.cluster_roles.custom_roles }}
-- **Total de Vinculações de Roles do Cluster:** {{ security_analysis.rbac_analysis.cluster_role_bindings.total_bindings }}
-- **Vinculações de Administrador do Cluster:** {{ security_analysis.rbac_analysis.cluster_role_bindings.cluster_admin_bindings }}
-- **Total de Contas de Serviço:** {{ security_analysis.rbac_analysis.service_accounts.total_service_accounts }}
+{% if security_analysis_status.get('rbac_analysis', false) and rbac_analysis %}
+- **Total de Roles do Cluster:** {{ rbac_analysis.get('cluster_roles', {}).get('total_cluster_roles', 0) }}
+- **Roles de Administrador do Cluster:** {{ rbac_analysis.get('cluster_roles', {}).get('cluster_admin_roles', 0) }}
+- **Roles do Sistema:** {{ rbac_analysis.get('cluster_roles', {}).get('system_roles', 0) }}
+- **Roles Personalizados:** {{ rbac_analysis.get('cluster_roles', {}).get('custom_roles', 0) }}
+- **Total de Vinculações de Roles do Cluster:** {{ rbac_analysis.get('cluster_role_bindings', {}).get('total_bindings', 0) }}
+- **Vinculações de Administrador do Cluster:** {{ rbac_analysis.get('cluster_role_bindings', {}).get('cluster_admin_bindings', 0) }}
+- **Total de Contas de Serviço:** {{ rbac_analysis.get('service_accounts', {}).get('total_service_accounts', 0) }}
 
-{% if security_analysis.rbac_analysis.excessive_permissions | length > 0 %}
+{% if rbac_analysis.get('excessive_permissions', []) | length > 0 %}
 ### Permissões Excessivas
-{% for permission in security_analysis.rbac_analysis.excessive_permissions %}
+{% for permission in rbac_analysis.get('excessive_permissions', []) %}
 - ⚠️ {{ permission }}
 {% endfor %}
 {% endif %}
 
-{% if security_analysis.rbac_analysis.privileged_accounts | length > 0 %}
+{% if rbac_analysis.get('privileged_accounts', []) | length > 0 %}
 ### Contas Privilegiadas
-{% for account in security_analysis.rbac_analysis.privileged_accounts %}
+{% for account in rbac_analysis.get('privileged_accounts', []) %}
 - ⚠️ {{ account }}
 {% endfor %}
 {% endif %}
 
-{% if security_analysis.rbac_analysis.issues | length > 0 %}
+{% if rbac_analysis.get('issues', []) | length > 0 %}
 ### Problemas RBAC
-{% for issue in security_analysis.rbac_analysis.issues %}
+{% for issue in rbac_analysis.get('issues', []) %}
 - ⚠️ {{ issue }}
 {% endfor %}
 {% endif %}
@@ -53,19 +59,19 @@
 
 ## Análise de Segurança de Pods
 
-{% if security_analysis_status.pod_security %}
-- **Total de Pods:** {{ security_analysis.pod_security.privileged_containers + security_analysis.pod_security.root_containers + security_analysis.pod_security.host_network_pods }}
-- **Containers Privilegiados:** {{ security_analysis.pod_security.privileged_containers }}
-- **Containers Root:** {{ security_analysis.pod_security.root_containers }}
-- **Pods com Rede do Host:** {{ security_analysis.pod_security.host_network_pods }}
-- **Pods com PID do Host:** {{ security_analysis.pod_security.host_pid_pods }}
-- **Pods com IPC do Host:** {{ security_analysis.pod_security.host_ipc_pods }}
-- **Restrições de Contexto de Segurança:** {{ security_analysis.pod_security.security_context_constraints.total_sccs }}
-- **Políticas de Segurança de Pods:** {{ security_analysis.pod_security.pod_security_policies }}
+{% if security_analysis_status.get('pod_security', false) and pod_security %}
+- **Total de Pods:** {{ (pod_security.get('privileged_containers', 0) | int) + (pod_security.get('root_containers', 0) | int) + (pod_security.get('host_network_pods', 0) | int) }}
+- **Containers Privilegiados:** {{ pod_security.get('privileged_containers', 0) }}
+- **Containers Root:** {{ pod_security.get('root_containers', 0) }}
+- **Pods com Rede do Host:** {{ pod_security.get('host_network_pods', 0) }}
+- **Pods com PID do Host:** {{ pod_security.get('host_pid_pods', 0) }}
+- **Pods com IPC do Host:** {{ pod_security.get('host_ipc_pods', 0) }}
+- **Restrições de Contexto de Segurança:** {{ pod_security.get('security_context_constraints', {}).get('total_sccs', 0) }}
+- **Políticas de Segurança de Pods:** {{ pod_security.get('pod_security_policies', 0) }}
 
-{% if security_analysis.pod_security.pod_security_issues | length > 0 %}
+{% if pod_security.get('pod_security_issues', []) | length > 0 %}
 ### Problemas de Segurança de Pods
-{% for issue in security_analysis.pod_security.pod_security_issues %}
+{% for issue in pod_security.get('pod_security_issues', []) %}
 - ⚠️ {{ issue }}
 {% endfor %}
 {% endif %}
@@ -76,38 +82,39 @@
 ## Recomendações de Segurança
 
 ### Alta Prioridade
-{% if security_analysis_status.rbac_analysis and security_analysis.rbac_analysis.cluster_role_bindings.cluster_admin_bindings > 3 %}
+{% if security_analysis_status.get('rbac_analysis', false) and (rbac_analysis.get('cluster_role_bindings', {}).get('cluster_admin_bindings', 0) | int) > 3 %}
 - Reduzir o uso do role cluster-admin ao mínimo necessário
 {% endif %}
-{% if security_analysis_status.pod_security and security_analysis.pod_security.privileged_containers > 0 %}
+{% if security_analysis_status.get('pod_security', false) and (pod_security.get('privileged_containers', 0) | int) > 0 %}
 - Remover containers privilegiados ou implementar contextos de segurança adequados
 {% endif %}
-{% if security_analysis_status.pod_security and security_analysis.pod_security.root_containers > 0 %}
+{% if security_analysis_status.get('pod_security', false) and (pod_security.get('root_containers', 0) | int) > 0 %}
 - Evitar executar containers como usuário root
 {% endif %}
 
 ### Média Prioridade
-{% if security_analysis_status.rbac_analysis and security_analysis.rbac_analysis.excessive_permissions | length > 0 %}
+{% if security_analysis_status.get('rbac_analysis', false) and rbac_analysis.get('excessive_permissions', []) | length > 0 %}
 - Revisar e minimizar permissões excessivas
 {% endif %}
-{% if security_analysis_status.pod_security and security_analysis.pod_security.host_network_pods > 0 %}
+{% if security_analysis_status.get('pod_security', false) and (pod_security.get('host_network_pods', 0) | int) > 0 %}
 - Evitar usar rede do host para pods quando possível
 {% endif %}
 
 ### Baixa Prioridade
-{% if security_analysis_status.rbac_analysis and security_analysis.rbac_analysis.privileged_accounts | length > 0 %}
+{% if security_analysis_status.get('rbac_analysis', false) and rbac_analysis.get('privileged_accounts', []) | length > 0 %}
 - Revisar contas de serviço com privilégios elevados
 {% endif %}
 
 ## Detalhamento da Pontuação de Segurança
 
-**Pontuação Geral:** {{ security_analysis.overall_security_score }}/100
+**Pontuação Geral:** {{ security_analysis.get('overall_security_score', 0) if security_analysis is defined else 0 }}/100
 
-{% if security_analysis.overall_security_score >= 90 %}
+{% set security_score_int = (security_analysis.get('overall_security_score', 0) | int) if security_analysis is defined else 0 %}
+{% if security_score_int >= 90 %}
 🟢 **Excelente** - A segurança do cluster está bem configurada
-{% elif security_analysis.overall_security_score >= 70 %}
+{% elif security_score_int >= 70 %}
 🟡 **Bom** - Algumas melhorias de segurança recomendadas
-{% elif security_analysis.overall_security_score >= 50 %}
+{% elif security_score_int >= 50 %}
 🟠 **Regular** - Várias questões de segurança precisam de atenção
 {% else %}
 🔴 **Ruim** - Melhorias significativas de segurança necessárias

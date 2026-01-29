@@ -12,6 +12,8 @@
     src: consolidated_health_check_report.j2
     dest: "{{ reports_output_dir }}/consolidated/consolidated_health_check_report.md"
     mode: '0644'
+  when: not ansible_check_mode | bool
+  ignore_errors: true
   vars:
     report_title: "Relatório Consolidado de Verificação de Saúde"
     generation_timestamp: "{{ ansible_date_time.iso8601 }}"

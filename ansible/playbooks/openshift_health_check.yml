@@ -1,8 +1,12 @@
 ---
 # Playbook principal para Avaliação de Saúde do OpenShift
 # Este playbook executa uma análise abrangente de clusters OpenShift 4.17
+# NOTA: Se você está vendo execução duplicada, verifique:
+# 1. Se há múltiplos hosts no inventory (use --limit para especificar um host)
+# 2. Se há aliases duplicados no inventory (ex: 'dev' e 'development-cluster' apontando para o mesmo host)
+# 3. Se o inventory está sendo carregado duas vezes (verifique ansible.cfg)
 - name: Avaliação de Saúde do OpenShift
-  hosts: localhost
+  hosts: all
   gather_facts: true
   vars:
     # Configurações de conexão com o cluster OpenShift
@@ -18,12 +22,24 @@
     # Configurações de saída dos relatórios
     output_dir: "{{ playbook_dir }}/../reports"
     timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
-    cluster_name: "{{ cluster_name | default('openshift-cluster') }}"
-    execution_id: "{{ cluster_name }}_{{ timestamp }}"
-    reports_output_dir: "{{ output_dir }}/{{ execution_id }}"
-    report_output_path: "{{ reports_output_dir }}"
+    # execution_id e paths serão definidos nas pre_tasks após cluster_name ser definido
+    execution_id: ""
+    reports_output_dir: ""
+    report_output_path: ""
     
   pre_tasks:
+    # Definir cluster_name evitando loop recursivo
+    # Primeiro tenta da variável -e cluster_name, depois do inventário, depois default
+    - name: Definir cluster_name a partir de variáveis
+      set_fact:
+        cluster_name: "{{ cluster_name if cluster_name is defined and cluster_name != '' else (hostvars[inventory_hostname]['cluster_name'] | default('openshift-cluster')) }}"
+    
+    # Recalcular execution_id e paths após definir cluster_name
+    - name: Recalcular execution_id e paths
+      set_fact:
+        execution_id: "{{ cluster_name }}_{{ timestamp }}"
+        reports_output_dir: "{{ output_dir }}/{{ execution_id }}"
+        report_output_path: "{{ reports_output_dir }}"
     # Criar diretório para kubeconfig gerado dinamicamente
     - name: Criar diretório para kubeconfig
       file:

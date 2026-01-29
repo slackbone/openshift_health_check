@@ -26,7 +26,10 @@
       include_vars:
         file: "{{ data_output_path }}/raw_data/namespaces.json"
         name: namespaces_data
-      when: data_collection_completed | bool
+      when: 
+        - data_collection_completed | bool
+        - not ansible_check_mode | bool
+      ignore_errors: true
 
     - name: Analyze storage from namespaces data
       set_fact:
@@ -49,9 +52,11 @@
             available_capacity: "Unknown"
           issues: ["Storage analysis limited - detailed storage data not collected"]
 
-    - name: Check storage architecture issues
+    - name: Initialize storage issues list
       set_fact:
         storage_issues: []
+
+    - name: Check storage architecture issues
       block:
         - name: Check for storage class configuration
           set_fact:

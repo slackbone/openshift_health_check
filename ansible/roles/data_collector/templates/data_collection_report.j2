@@ -38,7 +38,7 @@
 **Total de Componentes:** {{ total_count }}  
 **Coletas Bem-sucedidas:** {{ success_count }}  
 **Coletas Falharam:** {{ total_count - success_count }}  
-**Taxa de Sucesso:** {{ ((success_count / total_count) * 100) | round(2) }}%  
+**Taxa de Sucesso:** {% if total_count > 0 %}{{ ((success_count / total_count) * 100) | round(2) }}%{% else %}0%{% endif %}  
 
 ## Localização dos Arquivos de Dados
 

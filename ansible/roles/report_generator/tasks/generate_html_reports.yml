@@ -3,6 +3,9 @@
   template:
     src: data_collection_report.html
     dest: "{{ reports_output_dir }}/html/data_collection/data_collection_report.html"
+  when: 
+    - generate_html_reports | default(true) | bool
+    - not ansible_check_mode | bool
   vars:
     report_title: "Relatório de Coleta de Dados"
     generation_timestamp: "{{ ansible_date_time.iso8601 }}"
@@ -49,6 +52,10 @@
   template:
     src: architecture_analysis_report.html
     dest: "{{ reports_output_dir }}/html/architecture_analysis/architecture_analysis_report.html"
+  when: 
+    - generate_html_reports | default(true) | bool
+    - not ansible_check_mode | bool
+  ignore_errors: true
   vars:
     report_title: "Relatório de Análise de Arquitetura"
     generation_timestamp: "{{ ansible_date_time.iso8601 }}"
@@ -108,6 +115,10 @@
   template:
     src: security_analysis_report.html
     dest: "{{ reports_output_dir }}/html/security_analysis/security_analysis_report.html"
+  when: 
+    - generate_html_reports | default(true) | bool
+    - not ansible_check_mode | bool
+  ignore_errors: true
   vars:
     report_title: "Relatório de Análise de Segurança"
     generation_timestamp: "{{ ansible_date_time.iso8601 }}"
@@ -156,6 +167,10 @@
   template:
     src: best_practices_analysis_report.html
     dest: "{{ reports_output_dir }}/html/best_practices_analysis/best_practices_analysis_report.html"
+  when: 
+    - generate_html_reports | default(true) | bool
+    - not ansible_check_mode | bool
+  ignore_errors: true
   vars:
     report_title: "Relatório de Análise de Melhores Práticas"
     generation_timestamp: "{{ ansible_date_time.iso8601 }}"
@@ -193,6 +208,10 @@
   template:
     src: resource_optimization_report.html
     dest: "{{ reports_output_dir }}/html/resource_optimization/resource_optimization_report.html"
+  when: 
+    - generate_html_reports | default(true) | bool
+    - not ansible_check_mode | bool
+  ignore_errors: true
   vars:
     report_title: "Relatório de Otimização de Recursos"
     generation_timestamp: "{{ ansible_date_time.iso8601 }}"

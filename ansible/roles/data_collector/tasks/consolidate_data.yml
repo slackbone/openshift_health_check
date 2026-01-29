@@ -10,19 +10,19 @@
             cli_command: "{{ collection_metadata.cli_command }}"
             collection_host: "{{ collection_metadata.collection_host }}"
             ansible_version: "{{ collection_metadata.ansible_version }}"
-            collection_status: "{{ collection_status }}"
+            collection_status: "{{ collection_status | default({}) }}"
           data_files:
-            cluster_info: "{{ 'cluster_info.json' if collection_status.cluster_info else null }}"
-            nodes: "{{ 'nodes.json' if collection_status.nodes else null }}"
-            namespaces: "{{ 'namespaces.json' if collection_status.namespaces else null }}"
-            pods: "{{ 'pods.json' if collection_status.pods else null }}"
-            services: "{{ 'services.json' if collection_status.services else null }}"
-            deployments: "{{ 'deployments.json' if collection_status.deployments else null }}"
-            rbac: "{{ 'rbac.json' if collection_status.rbac else null }}"
-            security_configs: "{{ 'security_configs.json' if collection_status.security_configs else null }}"
-            operators: "{{ 'operators.json' if collection_status.operators else null }}"
-            metrics: "{{ 'metrics.json' if collection_status.metrics else null }}"
-            events: "{{ 'events.json' if collection_status.events else null }}"
+            cluster_info: "{{ 'cluster_info.json' if (collection_status | default({})).cluster_info | default(false) | bool else '' }}"
+            nodes: "{{ 'nodes.json' if (collection_status | default({})).nodes | default(false) | bool else '' }}"
+            namespaces: "{{ 'namespaces.json' if (collection_status | default({})).namespaces | default(false) | bool else '' }}"
+            pods: "{{ 'pods.json' if (collection_status | default({})).pods | default(false) | bool else '' }}"
+            services: "{{ 'services.json' if (collection_status | default({})).services | default(false) | bool else '' }}"
+            deployments: "{{ 'deployments.json' if (collection_status | default({})).deployments | default(false) | bool else '' }}"
+            rbac: "{{ 'rbac.json' if (collection_status | default({})).rbac | default(false) | bool else '' }}"
+            security_configs: "{{ 'security_configs.json' if (collection_status | default({})).security_configs | default(false) | bool else '' }}"
+            operators: "{{ 'operators.json' if (collection_status | default({})).operators | default(false) | bool else '' }}"
+            metrics: "{{ 'metrics.json' if (collection_status | default({})).metrics | default(false) | bool else '' }}"
+            events: "{{ 'events.json' if (collection_status | default({})).events | default(false) | bool else '' }}"
 
     - name: Save consolidated data summary
       copy:
@@ -37,12 +37,11 @@
         mode: '0644'
 
     - name: Compress data directory if requested
-      archive:
-        path: "{{ data_output_dir }}"
-        dest: "{{ data_output_dir }}.tar.gz"
-        format: gz
-        remove: false
+      shell: tar -czf "{{ data_output_dir }}.tar.gz" -C "{{ data_output_dir | dirname }}" "{{ data_output_dir | basename }}"
+      args:
+        creates: "{{ data_output_dir }}.tar.gz"
       when: compress_data | bool
+      changed_when: false
 
     - name: Set fact for data collection completion
       set_fact:
@@ -55,17 +54,17 @@
           Data collection completed!
           
           Collection Status:
-          - Cluster Info: {{ '✓' if collection_status.cluster_info else '✗' }}
-          - Nodes: {{ '✓' if collection_status.nodes else '✗' }}
-          - Namespaces: {{ '✓' if collection_status.namespaces else '✗' }}
-          - Pods: {{ '✓' if collection_status.pods else '✗' }}
-          - Services: {{ '✓' if collection_status.services else '✗' }}
-          - Deployments: {{ '✓' if collection_status.deployments else '✗' }}
-          - RBAC: {{ '✓' if collection_status.rbac else '✗' }}
-          - Security Configs: {{ '✓' if collection_status.security_configs else '✗' }}
-          - Operators: {{ '✓' if collection_status.operators else '✗' }}
-          - Metrics: {{ '✓' if collection_status.metrics else '✗' }}
-          - Events: {{ '✓' if collection_status.events else '✗' }}
+          - Cluster Info: {{ '✓' if (collection_status | default({})).cluster_info | default(false) else '✗' }}
+          - Nodes: {{ '✓' if (collection_status | default({})).nodes | default(false) else '✗' }}
+          - Namespaces: {{ '✓' if (collection_status | default({})).namespaces | default(false) else '✗' }}
+          - Pods: {{ '✓' if (collection_status | default({})).pods | default(false) else '✗' }}
+          - Services: {{ '✓' if (collection_status | default({})).services | default(false) else '✗' }}
+          - Deployments: {{ '✓' if (collection_status | default({})).deployments | default(false) else '✗' }}
+          - RBAC: {{ '✓' if (collection_status | default({})).rbac | default(false) else '✗' }}
+          - Security Configs: {{ '✓' if (collection_status | default({})).security_configs | default(false) else '✗' }}
+          - Operators: {{ '✓' if (collection_status | default({})).operators | default(false) else '✗' }}
+          - Metrics: {{ '✓' if (collection_status | default({})).metrics | default(false) else '✗' }}
+          - Events: {{ '✓' if (collection_status | default({})).events | default(false) else '✗' }}
           
           Data saved to: {{ data_output_dir }}
 

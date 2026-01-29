@@ -5,7 +5,10 @@
       include_vars:
         file: "{{ data_output_path }}/raw_data/cluster_info.json"
         name: cluster_data
-      when: data_collection_completed | bool
+      when: 
+        - data_collection_completed | bool
+        - not ansible_check_mode | bool
+      ignore_errors: true
 
     - name: Set default cluster data if not available
       set_fact:
@@ -14,68 +17,98 @@
           cluster_version: {}
           nodes_overview: "No nodes overview available"
           namespaces_overview: "No namespaces overview available"
-      when: not data_collection_completed | bool
+      when: (cluster_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool)
+
+    - name: Initialize cluster_version_has_items
+      set_fact:
+        cluster_version_has_items: []
+
+    - name: Check if cluster_version has items key
+      set_fact:
+        cluster_version_has_items: "{{ cluster_data.cluster_version.get('items', []) | default([]) }}"
+      when: 
+        - cluster_data is defined
+        - cluster_data.cluster_version is defined
+        - cluster_data.cluster_version is mapping
+      ignore_errors: true
 
     - name: Parse cluster version
       set_fact:
-        cluster_version: "{{ cluster_data.cluster_version.items[0].status.desired.version | default('Unknown') }}"
-      when: cluster_data.cluster_version.items is defined
+        cluster_version: "{{ cluster_version_has_items[0].status.desired.version | default('Unknown') }}"
+      when: 
+        - cluster_data is defined
+        - cluster_data.cluster_version is defined
+        - cluster_version_has_items is defined
+        - cluster_version_has_items is iterable
+        - cluster_version_has_items is not string
+        - (cluster_version_has_items | length) > 0
 
     - name: Set default cluster version
       set_fact:
         cluster_version: "Unknown"
-      when: cluster_data.cluster_version.items is not defined
+      when: (cluster_data is not defined) or (cluster_data.cluster_version is not defined) or (cluster_version_has_items is not defined) or (cluster_version_has_items is not iterable) or (cluster_version_has_items is string) or ((cluster_version_has_items | length) == 0)
 
     - name: Count nodes from overview
       set_fact:
         total_nodes: "{{ cluster_data.nodes_overview.split('\n') | length - 1 }}"
-      when: cluster_data.nodes_overview != "No nodes overview available"
+      when: 
+        - cluster_data is defined
+        - cluster_data.nodes_overview is defined
+        - cluster_data.nodes_overview != "No nodes overview available"
 
     - name: Set default node count
       set_fact:
         total_nodes: 0
-      when: cluster_data.nodes_overview == "No nodes overview available"
+      when: (cluster_data is not defined) or (cluster_data.nodes_overview is not defined) or (cluster_data.nodes_overview == "No nodes overview available") or (cluster_data.nodes_overview == "")
 
     - name: Count namespaces from overview
       set_fact:
         total_namespaces: "{{ cluster_data.namespaces_overview.split('\n') | length - 1 }}"
-      when: cluster_data.namespaces_overview != "No namespaces overview available"
+      when: 
+        - cluster_data is defined
+        - cluster_data.namespaces_overview is defined
+        - cluster_data.namespaces_overview != "No namespaces overview available"
+        - cluster_data.namespaces_overview != ""
 
     - name: Set default namespace count
       set_fact:
         total_namespaces: 0
-      when: cluster_data.namespaces_overview == "No namespaces overview available"
+      when: (cluster_data is not defined) or (cluster_data.namespaces_overview is not defined) or (cluster_data.namespaces_overview == "No namespaces overview available") or (cluster_data.namespaces_overview == "")
 
-    - name: Analyze cluster health
+    - name: Initialize cluster health issues
       set_fact:
         cluster_health_issues: []
-      block:
-        - name: Check minimum master nodes
-          set_fact:
-            cluster_health_issues: "{{ cluster_health_issues + ['Insufficient master nodes: ' + (total_nodes | string) + ' (minimum: ' + (min_master_nodes | string) + ')'] }}"
-          when: total_nodes < min_master_nodes
+        total_nodes_int: "{{ (total_nodes | default(0)) | int }}"
+        total_namespaces_int: "{{ (total_namespaces | default(0)) | int }}"
 
-        - name: Check minimum worker nodes
-          set_fact:
-            cluster_health_issues: "{{ cluster_health_issues + ['Insufficient worker nodes: ' + (total_nodes | string) + ' (minimum: ' + (min_worker_nodes | string) + ')'] }}"
-          when: total_nodes < min_worker_nodes
+    - name: Check minimum master nodes
+      set_fact:
+        cluster_health_issues: "{{ cluster_health_issues + ['Insufficient master nodes: ' + (total_nodes_int | string) + ' (minimum: ' + (min_master_nodes | default(3) | string) + ')'] }}"
+      when: 
+        - total_nodes_int is defined
+        - min_master_nodes is defined
+        - (total_nodes_int | int) < (min_master_nodes | int)
+
+    - name: Check minimum worker nodes
+      set_fact:
+        cluster_health_issues: "{{ cluster_health_issues + ['Insufficient worker nodes: ' + (total_nodes_int | string) + ' (minimum: ' + (min_worker_nodes | default(2) | string) + ')'] }}"
+      when: 
+        - total_nodes_int is defined
+        - min_worker_nodes is defined
+        - (total_nodes_int | int) < (min_worker_nodes | int)
 
     - name: Determine cluster health status
       set_fact:
-        cluster_health: "{{ 'healthy' if cluster_health_issues | length == 0 else 'issues_detected' }}"
+        cluster_health: "{{ 'healthy' if (cluster_health_issues | default([]) | length == 0) else 'issues_detected' }}"
+
+    - name: Initialize architecture_analysis if not exists
+      set_fact:
+        architecture_analysis: {}
+      when: architecture_analysis is not defined
 
     - name: Update architecture analysis with cluster overview
       set_fact:
-        architecture_analysis:
-          cluster_overview:
-            cluster_version: "{{ cluster_version }}"
-            total_nodes: "{{ total_nodes }}"
-            master_nodes: "{{ total_nodes }}"
-            worker_nodes: "{{ total_nodes }}"
-            infrastructure_nodes: 0
-            cluster_health: "{{ cluster_health }}"
-            issues: "{{ cluster_health_issues }}"
-            total_namespaces: "{{ total_namespaces }}"
+        architecture_analysis: "{{ architecture_analysis | default({}) | combine({'cluster_overview': {'cluster_version': cluster_version | default('Unknown'), 'total_nodes': total_nodes_int | default(0), 'master_nodes': total_nodes_int | default(0), 'worker_nodes': total_nodes_int | default(0), 'infrastructure_nodes': 0, 'cluster_health': cluster_health | default('Unknown'), 'issues': cluster_health_issues | default([]), 'total_namespaces': total_namespaces_int | default(0)}}) }}"
 
     - name: Set fact for cluster overview analysis status
       set_fact:
@@ -90,6 +123,10 @@
     - name: Handle cluster overview analysis failure
       debug:
         msg: "Failed to analyze cluster overview: {{ ansible_failed_result.msg }}"
+      
+    - name: Ensure architecture_analysis.cluster_overview exists even on failure
+      set_fact:
+        architecture_analysis: "{{ architecture_analysis | default({}) | combine({'cluster_overview': {'cluster_version': 'Unknown', 'total_nodes': 0, 'master_nodes': 0, 'worker_nodes': 0, 'infrastructure_nodes': 0, 'cluster_health': 'Unknown', 'issues': ['Analysis failed'], 'total_namespaces': 0}}) }}"
       
     - name: Set fact for cluster overview analysis status
       set_fact:

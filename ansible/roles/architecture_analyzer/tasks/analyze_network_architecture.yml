@@ -5,13 +5,19 @@
       include_vars:
         file: "{{ data_output_path }}/raw_data/services.json"
         name: services_data
-      when: data_collection_completed | bool
+      when: 
+        - data_collection_completed | bool
+        - not ansible_check_mode | bool
+      ignore_errors: true
 
     - name: Load security configs for network policies
       include_vars:
         file: "{{ data_output_path }}/raw_data/security_configs.json"
         name: security_data
-      when: data_collection_completed | bool
+      when: 
+        - data_collection_completed | bool
+        - not ansible_check_mode | bool
+      ignore_errors: true
 
     - name: Set default network data if not available
       set_fact:
@@ -22,47 +28,61 @@
           endpoints_json: '{"items": []}'
         security_data:
           networkpolicies_json: '{"items": []}'
-      when: not data_collection_completed | bool
+      when: (services_data is not defined) or (security_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool)
 
     - name: Parse network data
       set_fact:
-        services_list: "{{ services_data.services_json | from_json }}"
-        routes_list: "{{ services_data.routes_json | from_json }}"
-        ingresses_list: "{{ services_data.ingresses_json | from_json }}"
-        network_policies_list: "{{ security_data.networkpolicies_json | from_json }}"
+        services_list_raw: "{{ services_data.services_json | default('{\"items\": []}') | from_json }}"
+        routes_list_raw: "{{ services_data.routes_json | default('{\"items\": []}') | from_json }}"
+        ingresses_list_raw: "{{ services_data.ingresses_json | default('{\"items\": []}') | from_json }}"
+        network_policies_list_raw: "{{ security_data.networkpolicies_json | default('{\"items\": []}') | from_json }}"
+      when: services_data is defined and security_data is defined
+
+    - name: Ensure network lists are dicts with items
+      set_fact:
+        services_list: "{{ services_list_raw | default({'items': []}) }}"
+        routes_list: "{{ routes_list_raw | default({'items': []}) }}"
+        ingresses_list: "{{ ingresses_list_raw | default({'items': []}) }}"
+        network_policies_list: "{{ network_policies_list_raw | default({'items': []}) }}"
+        services_list_items: "{{ (services_list.get('items', [])) if (services_list is mapping) else [] }}"
+        routes_list_items: "{{ (routes_list.get('items', [])) if (routes_list is mapping) else [] }}"
+        ingresses_list_items: "{{ (ingresses_list.get('items', [])) if (ingresses_list is mapping) else [] }}"
+        network_policies_list_items: "{{ (network_policies_list.get('items', [])) if (network_policies_list is mapping) else [] }}"
 
     - name: Analyze network policies
       set_fact:
         network_policies_analysis:
-          total_policies: "{{ network_policies_list.items | length }}"
-          policies_by_namespace: "{{ network_policies_list.items | groupby('metadata.namespace') | map('first') | list }}"
-          namespaces_with_policies: "{{ network_policies_list.items | map(attribute='metadata.namespace') | unique | list | length }}"
+          total_policies: "{{ network_policies_list_items | length }}"
+          policies_by_namespace: "{{ network_policies_list_items | groupby('metadata.namespace') | map('first') | list }}"
+          namespaces_with_policies: "{{ network_policies_list_items | map(attribute='metadata.namespace') | unique | list | length }}"
 
     - name: Analyze ingress controllers
       set_fact:
         ingress_controllers_analysis:
-          total_routes: "{{ routes_list.items | length }}"
-          total_ingresses: "{{ ingresses_list.items | length }}"
-          routes_by_namespace: "{{ routes_list.items | groupby('metadata.namespace') | map('first') | list }}"
-          ingresses_by_namespace: "{{ ingresses_list.items | groupby('metadata.namespace') | map('first') | list }}"
+          total_routes: "{{ routes_list_items | length }}"
+          total_ingresses: "{{ ingresses_list_items | length }}"
+          routes_by_namespace: "{{ routes_list_items | groupby('metadata.namespace') | map('first') | list }}"
+          ingresses_by_namespace: "{{ ingresses_list_items | groupby('metadata.namespace') | map('first') | list }}"
 
     - name: Analyze load balancers
       set_fact:
         load_balancers_analysis:
-          services_with_external_ips: "{{ services_list.items | selectattr('spec.externalIPs', 'defined') | list | length }}"
-          services_with_load_balancer: "{{ services_list.items | selectattr('spec.type', 'equalto', 'LoadBalancer') | list | length }}"
-          services_with_node_port: "{{ services_list.items | selectattr('spec.type', 'equalto', 'NodePort') | list | length }}"
+          services_with_external_ips: "{{ services_list_items | selectattr('spec.externalIPs', 'defined') | list | length }}"
+          services_with_load_balancer: "{{ services_list_items | selectattr('spec.type', 'equalto', 'LoadBalancer') | list | length }}"
+          services_with_node_port: "{{ services_list_items | selectattr('spec.type', 'equalto', 'NodePort') | list | length }}"
 
     - name: Analyze DNS configuration
       set_fact:
         dns_analysis:
-          total_services: "{{ services_list.items | length }}"
-          services_with_cluster_ip: "{{ services_list.items | selectattr('spec.clusterIP', 'defined') | list | length }}"
-          headless_services: "{{ services_list.items | selectattr('spec.clusterIP', 'equalto', 'None') | list | length }}"
+          total_services: "{{ services_list_items | length }}"
+          services_with_cluster_ip: "{{ services_list_items | selectattr('spec.clusterIP', 'defined') | list | length }}"
+          headless_services: "{{ services_list_items | selectattr('spec.clusterIP', 'equalto', 'None') | list | length }}"
 
-    - name: Check network architecture issues
+    - name: Initialize network issues
       set_fact:
         network_issues: []
+
+    - name: Check network architecture issues
       block:
         - name: Check for namespaces without network policies
           set_fact:
@@ -72,7 +92,7 @@
         - name: Check for excessive load balancer services
           set_fact:
             network_issues: "{{ network_issues + ['High number of LoadBalancer services may impact costs'] }}"
-          when: load_balancers_analysis.services_with_load_balancer > 10
+          when: (load_balancers_analysis.services_with_load_balancer | int) > 10
 
     - name: Update architecture analysis with network analysis
       set_fact:

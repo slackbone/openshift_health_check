@@ -1,5 +1,12 @@
 # Verificação de Saúde OpenShift - Relatório de Análise de Arquitetura
 
+{% set cluster_overview_default = {'cluster_version': 'Unknown', 'total_nodes': 0, 'master_nodes': 0, 'worker_nodes': 0, 'infrastructure_nodes': 0, 'cluster_health': 'Unknown', 'issues': [], 'total_namespaces': 0} %}
+{% if architecture_analysis is defined and architecture_analysis.get('cluster_overview') is defined %}
+{% set cluster_overview = architecture_analysis.get('cluster_overview') %}
+{% else %}
+{% set cluster_overview = cluster_overview_default %}
+{% endif %}
+
 ## Resumo da Análise
 
 **Timestamp da Análise:** {{ ansible_date_time.iso8601 }}  
@@ -18,43 +25,43 @@
 | Distribuição de Recursos | {{ '✓ Sucesso' if analysis_status.resource_distribution else '✗ Falhou' }} |
 
 ## Visão Geral do Cluster
+{% if cluster_overview %}
+- **Versão do Cluster:** {{ cluster_overview.get('cluster_version', 'Unknown') }}
+- **Total de Nós:** {{ cluster_overview.get('total_nodes', 0) }}
+- **Nós Master:** {{ cluster_overview.get('master_nodes', 0) }}
+- **Nós Worker:** {{ cluster_overview.get('worker_nodes', 0) }}
+- **Nós de Infraestrutura:** {{ cluster_overview.get('infrastructure_nodes', 0) }}
+- **Total de Namespaces:** {{ cluster_overview.get('total_namespaces', 0) }}
+- **Saúde do Cluster:** {{ cluster_overview.get('cluster_health', 'Unknown') }}
 
-{% if analysis_status.cluster_overview %}
-- **Versão do Cluster:** {{ architecture_analysis.cluster_overview.cluster_version }}
-- **Total de Nós:** {{ architecture_analysis.cluster_overview.total_nodes }}
-- **Nós Master:** {{ architecture_analysis.cluster_overview.master_nodes }}
-- **Nós Worker:** {{ architecture_analysis.cluster_overview.worker_nodes }}
-- **Nós de Infraestrutura:** {{ architecture_analysis.cluster_overview.infrastructure_nodes }}
-- **Total de Namespaces:** {{ architecture_analysis.cluster_overview.total_namespaces }}
-- **Saúde do Cluster:** {{ architecture_analysis.cluster_overview.cluster_health }}
-
-{% if architecture_analysis.cluster_overview.issues | length > 0 %}
+{% if cluster_overview.get('issues', []) | length > 0 %}
 ### Problemas do Cluster
-{% for issue in architecture_analysis.cluster_overview.issues %}
+{% for issue in cluster_overview.get('issues', []) %}
 - ⚠️ {{ issue }}
 {% endfor %}
 {% endif %}
 {% else %}
-❌ Análise da visão geral do cluster falhou
+❌ Análise da visão geral do cluster falhou ou não disponível
 {% endif %}
 
 ## Arquitetura de Nós
 
-{% if analysis_status.node_analysis %}
-- **Total de Nós:** {{ architecture_analysis.node_analysis.node_distribution.total_nodes }}
-- **Nós Master:** {{ architecture_analysis.node_analysis.node_distribution.master_nodes }}
-- **Nós Worker:** {{ architecture_analysis.node_analysis.node_distribution.worker_nodes }}
-- **Nós de Infraestrutura:** {{ architecture_analysis.node_analysis.node_distribution.infrastructure_nodes }}
+{% set node_analysis = architecture_analysis.get('node_analysis', {}) if architecture_analysis is defined else {} %}
+{% if analysis_status.node_analysis and node_analysis %}
+- **Total de Nós:** {{ node_analysis.get('node_distribution', {}).get('total_nodes', 0) }}
+- **Nós Master:** {{ node_analysis.get('node_distribution', {}).get('master_nodes', 0) }}
+- **Nós Worker:** {{ node_analysis.get('node_distribution', {}).get('worker_nodes', 0) }}
+- **Nós de Infraestrutura:** {{ node_analysis.get('node_distribution', {}).get('infrastructure_nodes', 0) }}
 
 ### Utilização de Recursos
-- **Total de Cores CPU:** {{ architecture_analysis.node_analysis.resource_utilization.total_cpu_cores }}
-- **Total de Memória:** {{ architecture_analysis.node_analysis.resource_utilization.total_memory }}
-- **CPU Alocável:** {{ architecture_analysis.node_analysis.resource_utilization.allocatable_cpu }}
-- **Memória Alocável:** {{ architecture_analysis.node_analysis.resource_utilization.allocatable_memory }}
+- **Total de Cores CPU:** {{ node_analysis.get('resource_utilization', {}).get('total_cpu_cores', 0) }}
+- **Total de Memória:** {{ node_analysis.get('resource_utilization', {}).get('total_memory', 0) }}
+- **CPU Alocável:** {{ node_analysis.get('resource_utilization', {}).get('allocatable_cpu', 0) }}
+- **Memória Alocável:** {{ node_analysis.get('resource_utilization', {}).get('allocatable_memory', 0) }}
 
-{% if architecture_analysis.node_analysis.issues | length > 0 %}
+{% if node_analysis.get('issues', []) | length > 0 %}
 ### Problemas dos Nós
-{% for issue in architecture_analysis.node_analysis.issues %}
+{% for issue in node_analysis.get('issues', []) %}
 - ⚠️ {{ issue }}
 {% endfor %}
 {% endif %}
@@ -64,17 +71,18 @@
 
 ## Arquitetura de Rede
 
-{% if analysis_status.network_analysis %}
-- **Políticas de Rede:** {{ architecture_analysis.network_analysis.network_policies.total_policies }}
-- **Namespaces com Políticas:** {{ architecture_analysis.network_analysis.network_policies.namespaces_with_policies }}
-- **Total de Rotas:** {{ architecture_analysis.network_analysis.ingress_controllers.total_routes }}
-- **Total de Ingresses:** {{ architecture_analysis.network_analysis.ingress_controllers.total_ingresses }}
-- **Serviços LoadBalancer:** {{ architecture_analysis.network_analysis.load_balancers.services_with_load_balancer }}
-- **Serviços NodePort:** {{ architecture_analysis.network_analysis.load_balancers.services_with_node_port }}
+{% set network_analysis = architecture_analysis.get('network_analysis', {}) if architecture_analysis is defined else {} %}
+{% if analysis_status.network_analysis and network_analysis %}
+- **Políticas de Rede:** {{ network_analysis.get('network_policies', {}).get('total_policies', 0) }}
+- **Namespaces com Políticas:** {{ network_analysis.get('network_policies', {}).get('namespaces_with_policies', 0) }}
+- **Total de Rotas:** {{ network_analysis.get('ingress_controllers', {}).get('total_routes', 0) }}
+- **Total de Ingresses:** {{ network_analysis.get('ingress_controllers', {}).get('total_ingresses', 0) }}
+- **Serviços LoadBalancer:** {{ network_analysis.get('load_balancers', {}).get('services_with_load_balancer', 0) }}
+- **Serviços NodePort:** {{ network_analysis.get('load_balancers', {}).get('services_with_node_port', 0) }}
 
-{% if architecture_analysis.network_analysis.issues | length > 0 %}
+{% if network_analysis.get('issues', []) | length > 0 %}
 ### Problemas de Rede
-{% for issue in architecture_analysis.network_analysis.issues %}
+{% for issue in network_analysis.get('issues', []) %}
 - ⚠️ {{ issue }}
 {% endfor %}
 {% endif %}
@@ -84,16 +92,17 @@
 
 ## Arquitetura de Armazenamento
 
-{% if analysis_status.storage_analysis %}
-- **Volumes Persistentes:** {{ architecture_analysis.storage_analysis.persistent_volumes.total_pvs }}
-- **PVs Vinculados:** {{ architecture_analysis.storage_analysis.persistent_volumes.bound_pvs }}
-- **PVs Disponíveis:** {{ architecture_analysis.storage_analysis.persistent_volumes.available_pvs }}
-- **Classes de Armazenamento:** {{ architecture_analysis.storage_analysis.storage_classes.total_storage_classes }}
-- **Classe de Armazenamento Padrão:** {{ architecture_analysis.storage_analysis.storage_classes.default_storage_class }}
+{% set storage_analysis = architecture_analysis.get('storage_analysis', {}) if architecture_analysis is defined else {} %}
+{% if analysis_status.storage_analysis and storage_analysis %}
+- **Volumes Persistentes:** {{ storage_analysis.get('persistent_volumes', {}).get('total_pvs', 0) }}
+- **PVs Vinculados:** {{ storage_analysis.get('persistent_volumes', {}).get('bound_pvs', 0) }}
+- **PVs Disponíveis:** {{ storage_analysis.get('persistent_volumes', {}).get('available_pvs', 0) }}
+- **Classes de Armazenamento:** {{ storage_analysis.get('storage_classes', {}).get('total_storage_classes', 0) }}
+- **Classe de Armazenamento Padrão:** {{ storage_analysis.get('storage_classes', {}).get('default_storage_class', 'Unknown') }}
 
-{% if architecture_analysis.storage_analysis.issues | length > 0 %}
+{% if storage_analysis.get('issues', []) | length > 0 %}
 ### Problemas de Armazenamento
-{% for issue in architecture_analysis.storage_analysis.issues %}
+{% for issue in storage_analysis.get('issues', []) %}
 - ⚠️ {{ issue }}
 {% endfor %}
 {% endif %}
@@ -103,15 +112,16 @@
 
 ## Saúde dos Operadores
 
-{% if analysis_status.operator_analysis %}
-- **Versões de Serviço do Cluster:** {{ architecture_analysis.operator_analysis.operator_health.total_csvs }}
-- **Assinaturas:** {{ architecture_analysis.operator_analysis.operator_health.total_subscriptions }}
-- **Planos de Instalação:** {{ architecture_analysis.operator_analysis.operator_health.total_install_plans }}
-- **Grupos de Operadores:** {{ architecture_analysis.operator_analysis.operator_health.total_operator_groups }}
+{% set operator_analysis = architecture_analysis.get('operator_analysis', {}) if architecture_analysis is defined else {} %}
+{% if analysis_status.operator_analysis and operator_analysis %}
+- **Versões de Serviço do Cluster:** {{ operator_analysis.get('operator_health', {}).get('total_csvs', 0) }}
+- **Assinaturas:** {{ operator_analysis.get('operator_health', {}).get('total_subscriptions', 0) }}
+- **Planos de Instalação:** {{ operator_analysis.get('operator_health', {}).get('total_install_plans', 0) }}
+- **Grupos de Operadores:** {{ operator_analysis.get('operator_health', {}).get('total_operator_groups', 0) }}
 
-{% if architecture_analysis.operator_analysis.operator_issues | length > 0 %}
+{% if operator_analysis.get('operator_issues', []) | length > 0 %}
 ### Problemas dos Operadores
-{% for issue in architecture_analysis.operator_analysis.operator_issues %}
+{% for issue in operator_analysis.get('operator_issues', []) %}
 - ⚠️ {{ issue }}
 {% endfor %}
 {% endif %}
@@ -121,20 +131,21 @@
 
 ## Distribuição de Recursos
 
-{% if analysis_status.resource_distribution %}
-- **Total de Namespaces:** {{ architecture_analysis.resource_distribution.namespace_distribution.total_namespaces }}
-- **Namespaces do Sistema:** {{ architecture_analysis.resource_distribution.namespace_distribution.system_namespaces }}
-- **Namespaces de Usuário:** {{ architecture_analysis.resource_distribution.namespace_distribution.user_namespaces }}
-- **Namespaces com Quotas:** {{ architecture_analysis.resource_distribution.namespace_distribution.namespaces_with_quotas }}
-- **Namespaces com Limites:** {{ architecture_analysis.resource_distribution.namespace_distribution.namespaces_with_limits }}
-- **Total de Pods:** {{ architecture_analysis.resource_distribution.pod_distribution.total_pods }}
-- **Pods em Execução:** {{ architecture_analysis.resource_distribution.pod_distribution.running_pods }}
-- **Pods Pendentes:** {{ architecture_analysis.resource_distribution.pod_distribution.pending_pods }}
-- **Pods Falharam:** {{ architecture_analysis.resource_distribution.pod_distribution.failed_pods }}
+{% set resource_distribution = architecture_analysis.get('resource_distribution', {}) if architecture_analysis is defined else {} %}
+{% if analysis_status.resource_distribution and resource_distribution %}
+- **Total de Namespaces:** {{ resource_distribution.get('namespace_distribution', {}).get('total_namespaces', 0) }}
+- **Namespaces do Sistema:** {{ resource_distribution.get('namespace_distribution', {}).get('system_namespaces', 0) }}
+- **Namespaces de Usuário:** {{ resource_distribution.get('namespace_distribution', {}).get('user_namespaces', 0) }}
+- **Namespaces com Quotas:** {{ resource_distribution.get('namespace_distribution', {}).get('namespaces_with_quotas', 0) }}
+- **Namespaces com Limites:** {{ resource_distribution.get('namespace_distribution', {}).get('namespaces_with_limits', 0) }}
+- **Total de Pods:** {{ resource_distribution.get('pod_distribution', {}).get('total_pods', 0) }}
+- **Pods em Execução:** {{ resource_distribution.get('pod_distribution', {}).get('running_pods', 0) }}
+- **Pods Pendentes:** {{ resource_distribution.get('pod_distribution', {}).get('pending_pods', 0) }}
+- **Pods Falharam:** {{ resource_distribution.get('pod_distribution', {}).get('failed_pods', 0) }}
 
-{% if architecture_analysis.resource_distribution.issues | length > 0 %}
+{% if resource_distribution.get('issues', []) | length > 0 %}
 ### Problemas de Distribuição de Recursos
-{% for issue in architecture_analysis.resource_distribution.issues %}
+{% for issue in resource_distribution.get('issues', []) %}
 - ⚠️ {{ issue }}
 {% endfor %}
 {% endif %}
@@ -145,32 +156,32 @@
 ## Recomendações
 
 ### Alta Prioridade
-{% if architecture_analysis.cluster_overview.issues | length > 0 %}
+{% if cluster_overview.get('issues', []) | length > 0 %}
 - Resolver problemas de saúde do cluster identificados na visão geral
 {% endif %}
-{% if architecture_analysis.node_analysis.issues | length > 0 %}
+{% if node_analysis.get('issues', []) | length > 0 %}
 - Resolver problemas de saúde dos nós
 {% endif %}
-{% if architecture_analysis.resource_distribution.pod_distribution.failed_pods > 0 %}
+{% if (resource_distribution.get('pod_distribution', {}).get('failed_pods', 0) | int) > 0 %}
 - Investigar e resolver pods que falharam
 {% endif %}
 
 ### Média Prioridade
-{% if architecture_analysis.network_analysis.network_policies.total_policies == 0 %}
+{% if network_analysis.get('network_policies', {}).get('total_policies', 0) == 0 %}
 - Implementar políticas de rede para melhor segurança
 {% endif %}
-{% if architecture_analysis.storage_analysis.storage_classes.default_storage_class == "Unknown" %}
+{% if storage_analysis.get('storage_classes', {}).get('default_storage_class', 'Unknown') == "Unknown" %}
 - Configurar classe de armazenamento padrão
 {% endif %}
-{% if architecture_analysis.resource_distribution.namespace_distribution.namespaces_with_quotas < (architecture_analysis.resource_distribution.namespace_distribution.total_namespaces * 0.5) %}
+{% if (resource_distribution.get('namespace_distribution', {}).get('namespaces_with_quotas', 0) | int) < ((resource_distribution.get('namespace_distribution', {}).get('total_namespaces', 0) | int) * 0.5) %}
 - Implementar quotas de recursos para melhor gerenciamento
 {% endif %}
 
 ### Baixa Prioridade
-{% if architecture_analysis.network_analysis.load_balancers.services_with_load_balancer > 10 %}
+{% if (network_analysis.get('load_balancers', {}).get('services_with_load_balancer', 0) | int) > 10 %}
 - Revisar uso de serviços LoadBalancer para otimização de custos
 {% endif %}
-{% if architecture_analysis.resource_distribution.pod_distribution.pending_pods > 5 %}
+{% if (resource_distribution.get('pod_distribution', {}).get('pending_pods', 0) | int) > 5 %}
 - Monitorar pods pendentes e disponibilidade de recursos
 {% endif %}
 
