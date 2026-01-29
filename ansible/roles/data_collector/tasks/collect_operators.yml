@@ -1,49 +1,49 @@
 ---
-- name: Collect operators information
+# Coleta de operators feita inteiramente no host remoto para evitar transferir
+# grandes JSONs ao controlador (evita "worker dead" em máquinas com poucos CPUs).
+- name: Collect operators information (on remote host)
   block:
-    - name: Get cluster service versions (OpenShift specific)
-      command: "{{ cli_command }} get clusterserviceversions --all-namespaces -o json"
-      register: csv_json_result
-      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
-      failed_when: false
-
-    - name: Get subscriptions (OpenShift specific)
-      command: "{{ cli_command }} get subscriptions --all-namespaces -o json"
-      register: subscriptions_json_result
-      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
-      failed_when: false
-
-    - name: Get install plans (OpenShift specific)
-      command: "{{ cli_command }} get installplans --all-namespaces -o json"
-      register: installplans_json_result
-      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
-      failed_when: false
-
-    - name: Get operator groups (OpenShift specific)
-      command: "{{ cli_command }} get operatorgroups --all-namespaces -o json"
-      register: operatorgroups_json_result
-      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
-      failed_when: false
-
-    - name: Get catalogs (OpenShift specific)
-      command: "{{ cli_command }} get catalogs --all-namespaces -o json"
-      register: catalogs_json_result
-      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
-      failed_when: false
-
-    - name: Save operators data to file
+    - name: Write collection_metadata to temp file on remote
       copy:
-        content: |
-          {
-            "clusterserviceversions_json": {{ csv_json_result.stdout | default('{}') }},
-            "subscriptions_json": {{ subscriptions_json_result.stdout | default('{}') }},
-            "installplans_json": {{ installplans_json_result.stdout | default('{}') }},
-            "operatorgroups_json": {{ operatorgroups_json_result.stdout | default('{}') }},
-            "catalogs_json": {{ catalogs_json_result.stdout | default('{}') }},
-            "collection_metadata": {{ collection_metadata | to_nice_json }}
-          }
-        dest: "{{ data_output_dir }}/operators.json"
-        mode: '0644'
+        content: "{{ collection_metadata | to_nice_json }}"
+        dest: "{{ data_output_dir }}/.operators_metadata.json"
+        mode: '0600'
+
+    - name: Copy merge script to remote (fallback when jq is not available)
+      copy:
+        src: merge_operators_json.py
+        dest: "{{ data_output_dir }}/merge_operators_json.py"
+        mode: '0755'
+
+    - name: Fetch operators data and build operators.json on remote
+      shell: |
+        set -e
+        export KUBECONFIG="{{ openshift_kubeconfig }}"
+        cd "{{ data_output_dir }}"
+        {{ cli_command }} get clusterserviceversions --all-namespaces -o json > _csv.json
+        {{ cli_command }} get subscriptions --all-namespaces -o json > _sub.json
+        {{ cli_command }} get installplans --all-namespaces -o json > _ip.json
+        {{ cli_command }} get operatorgroups --all-namespaces -o json > _og.json
+        {{ cli_command }} get catalogs --all-namespaces -o json > _cat.json
+        if command -v jq >/dev/null 2>&1; then
+          jq -n \
+            --slurpfile csv _csv.json \
+            --slurpfile sub _sub.json \
+            --slurpfile ip _ip.json \
+            --slurpfile og _og.json \
+            --slurpfile cat _cat.json \
+            --slurpfile cm .operators_metadata.json \
+            '{clusterserviceversions_json: $csv[0], subscriptions_json: $sub[0], installplans_json: $ip[0], operatorgroups_json: $og[0], catalogs_json: $cat[0], collection_metadata: $cm[0]}' \
+            > operators.json
+        else
+          python3 merge_operators_json.py
+        fi
+        rm -f _csv.json _sub.json _ip.json _og.json _cat.json .operators_metadata.json merge_operators_json.py
+      args:
+        executable: /bin/bash
+      register: operators_build_result
+      failed_when: operators_build_result.rc != 0
+      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 
     - name: Set fact for operators collection status
       set_fact:
@@ -52,13 +52,13 @@
 
     - name: Display operators collection status
       debug:
-        msg: "Operators information collected successfully"
+        msg: "Operators information collected successfully (built on remote)"
 
   rescue:
     - name: Handle operators collection failure
       debug:
         msg: "Failed to collect operators information: {{ ansible_failed_result.msg }}"
-      
+
     - name: Set fact for operators collection status
       set_fact:
         collection_status:
