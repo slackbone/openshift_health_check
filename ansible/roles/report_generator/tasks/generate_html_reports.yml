@@ -1,7 +1,7 @@
 ---
 - name: Generate HTML data collection report
   template:
-    src: data_collection_report.html
+    src: data_collection_report.html.j2
     dest: "{{ reports_output_dir }}/html/data_collection/data_collection_report.html"
   when: 
     - generate_html_reports | default(true) | bool

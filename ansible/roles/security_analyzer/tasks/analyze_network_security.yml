@@ -12,23 +12,41 @@
             controllers_list: []
           issues: ["Network security analysis limited - detailed network data not collected"]
 
-    - name: Load network-related data
-      include_vars:
-        file: "{{ data_output_path }}/services.json"
-        name: services_data
-      when: 
+    - name: Load network-related data from host
+      slurp:
+        src: "{{ data_output_path }}/services.json"
+      register: services_sec_slurp
+      when:
         - data_collection_completed | bool
         - not ansible_check_mode | bool
       ignore_errors: true
+      failed_when: false
 
-    - name: Load security configs for network policies
-      include_vars:
-        file: "{{ data_output_path }}/security_configs.json"
-        name: security_data
-      when: 
+    - name: Load security configs for network policies from host
+      slurp:
+        src: "{{ data_output_path }}/security_configs.json"
+      register: security_sec_slurp
+      when:
         - data_collection_completed | bool
         - not ansible_check_mode | bool
       ignore_errors: true
+      failed_when: false
+
+    - name: Set services_data from slurped content (security)
+      set_fact:
+        services_data: "{{ (services_sec_slurp.content | b64decode) | from_json }}"
+      when:
+        - services_sec_slurp is defined
+        - services_sec_slurp.content is defined
+        - (services_sec_slurp.content | length) > 0
+
+    - name: Set security_data from slurped content (security)
+      set_fact:
+        security_data: "{{ (security_sec_slurp.content | b64decode) | from_json }}"
+      when:
+        - security_sec_slurp is defined
+        - security_sec_slurp.content is defined
+        - (security_sec_slurp.content | length) > 0
 
     - name: Set default network data if not available
       set_fact:
@@ -37,7 +55,7 @@
           ingresses_json: '{"items": []}'
         security_data:
           networkpolicies_json: '{"items": []}'
-      when: (services_data is not defined) or (security_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool)
+      when: (services_data is not defined) or (security_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool) or (services_sec_slurp is not defined) or ((services_sec_slurp.content | default('')) | length == 0) or (security_sec_slurp is not defined) or ((security_sec_slurp.content | default('')) | length == 0)
 
     - name: Parse network security data
       set_fact:

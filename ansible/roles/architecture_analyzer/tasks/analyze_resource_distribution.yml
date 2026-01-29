@@ -1,23 +1,41 @@
 ---
 - name: Analyze resource distribution
   block:
-    - name: Load namespaces data
-      include_vars:
-        file: "{{ data_output_path }}/namespaces.json"
-        name: namespaces_data
-      when: 
+    - name: Load namespaces data from host
+      slurp:
+        src: "{{ data_output_path }}/namespaces.json"
+      register: namespaces_slurp
+      when:
         - data_collection_completed | bool
         - not ansible_check_mode | bool
       ignore_errors: true
+      failed_when: false
 
-    - name: Load pods data
-      include_vars:
-        file: "{{ data_output_path }}/pods.json"
-        name: pods_data
-      when: 
+    - name: Load pods data from host
+      slurp:
+        src: "{{ data_output_path }}/pods.json"
+      register: pods_slurp
+      when:
         - data_collection_completed | bool
         - not ansible_check_mode | bool
       ignore_errors: true
+      failed_when: false
+
+    - name: Set namespaces_data from slurped content
+      set_fact:
+        namespaces_data: "{{ (namespaces_slurp.content | b64decode) | from_json }}"
+      when:
+        - namespaces_slurp is defined
+        - namespaces_slurp.content is defined
+        - (namespaces_slurp.content | length) > 0
+
+    - name: Set pods_data from slurped content
+      set_fact:
+        pods_data: "{{ (pods_slurp.content | b64decode) | from_json }}"
+      when:
+        - pods_slurp is defined
+        - pods_slurp.content is defined
+        - (pods_slurp.content | length) > 0
 
     - name: Set default data if not available
       set_fact:
@@ -27,7 +45,7 @@
           limit_ranges: '{"items": []}'
         pods_data:
           pods_json: '{"items": []}'
-      when: (namespaces_data is not defined) or (pods_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool)
+      when: (namespaces_data is not defined) or (pods_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool) or (namespaces_slurp is not defined) or ((namespaces_slurp.content | default('')) | length == 0) or (pods_slurp is not defined) or ((pods_slurp.content | default('')) | length == 0)
 
     - name: Parse data
       set_fact:

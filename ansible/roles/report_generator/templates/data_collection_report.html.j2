@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ report_title | default('Relatório de Coleta de Dados') }}</title>
+  <style>
+    body { font-family: sans-serif; margin: 1rem 2rem; background: #f5f5f5; }
+    h1 { color: #333; }
+    table { border-collapse: collapse; margin: 1rem 0; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th, td { border: 1px solid #ddd; padding: 0.5rem 1rem; text-align: left; }
+    th { background: #333; color: white; }
+    .meta { color: #666; font-size: 0.9rem; margin: 1rem 0; }
+  </style>
+</head>
+<body>
+  <h1>{{ report_title | default('Relatório de Coleta de Dados') }}</h1>
+  <div class="meta">
+    <p><strong>Gerado em:</strong> {{ generation_timestamp | default(ansible_date_time.iso8601) }}</p>
+    <p><strong>Cluster:</strong> {{ cluster_url | default('N/A') }}</p>
+    <p><strong>Host:</strong> {{ collection_host | default(inventory_hostname) }}</p>
+    <p><strong>Taxa de sucesso:</strong> {{ success_rate | default(100) }}%</p>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Componente</th>
+        <th>Arquivo</th>
+        <th>Tamanho</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Cluster Info</td><td>{{ cluster_info_file | default('cluster_info.json') }}</td><td>{{ cluster_info_size | default('N/A') }}</td></tr>
+      <tr><td>Nodes</td><td>{{ nodes_file | default('nodes.json') }}</td><td>{{ nodes_size | default('N/A') }}</td></tr>
+      <tr><td>Namespaces</td><td>{{ namespaces_file | default('namespaces.json') }}</td><td>{{ namespaces_size | default('N/A') }}</td></tr>
+      <tr><td>Pods</td><td>{{ pods_file | default('pods.json') }}</td><td>{{ pods_size | default('N/A') }}</td></tr>
+      <tr><td>Services</td><td>{{ services_file | default('services.json') }}</td><td>{{ services_size | default('N/A') }}</td></tr>
+      <tr><td>Deployments</td><td>{{ deployments_file | default('deployments.json') }}</td><td>{{ deployments_size | default('N/A') }}</td></tr>
+      <tr><td>RBAC</td><td>{{ rbac_file | default('rbac.json') }}</td><td>{{ rbac_size | default('N/A') }}</td></tr>
+      <tr><td>Security Configs</td><td>{{ security_configs_file | default('security_configs.json') }}</td><td>{{ security_configs_size | default('N/A') }}</td></tr>
+      <tr><td>Operators</td><td>{{ operators_file | default('operators.json') }}</td><td>{{ operators_size | default('N/A') }}</td></tr>
+      <tr><td>Metrics</td><td>{{ metrics_file | default('metrics.json') }}</td><td>{{ metrics_size | default('N/A') }}</td></tr>
+      <tr><td>Events</td><td>{{ events_file | default('events.json') }}</td><td>{{ events_size | default('N/A') }}</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Coletados com sucesso:</strong> {{ successful_collections | default(0) }} / {{ total_components | default(0) }}</p>
+  <p><strong>Diretório de dados:</strong> {{ data_directory | default('N/A') }}</p>
+</body>
+</html>

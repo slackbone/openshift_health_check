@@ -24,7 +24,8 @@
         {{ cli_command }} get subscriptions --all-namespaces -o json > _sub.json
         {{ cli_command }} get installplans --all-namespaces -o json > _ip.json
         {{ cli_command }} get operatorgroups --all-namespaces -o json > _og.json
-        {{ cli_command }} get catalogs --all-namespaces -o json > _cat.json
+        # catalogs pode não existir em algumas versões do OpenShift (ex.: OCP 4.x sem Operators 2.x)
+        {{ cli_command }} get catalogs --all-namespaces -o json > _cat.json 2>/dev/null || echo '{}' > _cat.json
         if command -v jq >/dev/null 2>&1; then
           jq -n \
             --slurpfile csv _csv.json \

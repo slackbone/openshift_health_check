@@ -22,14 +22,23 @@
             available_capacity: "0"
           issues: []
 
-    - name: Load namespaces data for storage analysis
-      include_vars:
-        file: "{{ data_output_path }}/namespaces.json"
-        name: namespaces_data
-      when: 
+    - name: Load namespaces data for storage analysis from host
+      slurp:
+        src: "{{ data_output_path }}/namespaces.json"
+      register: namespaces_storage_slurp
+      when:
         - data_collection_completed | bool
         - not ansible_check_mode | bool
       ignore_errors: true
+      failed_when: false
+
+    - name: Set namespaces_data from slurped content (storage)
+      set_fact:
+        namespaces_data: "{{ (namespaces_storage_slurp.content | b64decode) | from_json }}"
+      when:
+        - namespaces_storage_slurp is defined
+        - namespaces_storage_slurp.content is defined
+        - (namespaces_storage_slurp.content | length) > 0
 
     - name: Analyze storage from namespaces data
       set_fact:

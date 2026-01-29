@@ -1,14 +1,23 @@
 ---
 - name: Analyze node architecture
   block:
-    - name: Load nodes data
-      include_vars:
-        file: "{{ data_output_path }}/nodes.json"
-        name: nodes_data
-      when: 
+    - name: Load nodes data from host (controller or remote)
+      slurp:
+        src: "{{ data_output_path }}/nodes.json"
+      register: nodes_slurp
+      when:
         - data_collection_completed | bool
         - not ansible_check_mode | bool
       ignore_errors: true
+      failed_when: false
+
+    - name: Set nodes_data from slurped content
+      set_fact:
+        nodes_data: "{{ (nodes_slurp.content | b64decode) | from_json }}"
+      when:
+        - nodes_slurp is defined
+        - nodes_slurp.content is defined
+        - (nodes_slurp.content | length) > 0
 
     - name: Set default nodes data if not available
       set_fact:
@@ -16,7 +25,7 @@
           nodes_json: '{"items": []}'
           nodes_describe: "No nodes data available"
           nodes_labels: "No nodes labels available"
-      when: (nodes_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool)
+      when: (nodes_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool) or (nodes_slurp is not defined) or ((nodes_slurp.content | default('')) | length == 0)
 
     - name: Parse nodes JSON
       set_fact:

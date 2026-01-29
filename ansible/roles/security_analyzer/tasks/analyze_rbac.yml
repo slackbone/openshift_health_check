@@ -1,14 +1,23 @@
 ---
 - name: Analyze RBAC
   block:
-    - name: Load RBAC data
-      include_vars:
-        file: "{{ data_output_path }}/rbac.json"
-        name: rbac_data
-      when: 
+    - name: Load RBAC data from host
+      slurp:
+        src: "{{ data_output_path }}/rbac.json"
+      register: rbac_slurp
+      when:
         - data_collection_completed | bool
         - not ansible_check_mode | bool
       ignore_errors: true
+      failed_when: false
+
+    - name: Set rbac_data from slurped content
+      set_fact:
+        rbac_data: "{{ (rbac_slurp.content | b64decode) | from_json }}"
+      when:
+        - rbac_slurp is defined
+        - rbac_slurp.content is defined
+        - (rbac_slurp.content | length) > 0
 
     - name: Set default RBAC data if not available
       set_fact:
@@ -18,7 +27,7 @@
           roles_json: '{"items": []}'
           rolebindings_json: '{"items": []}'
           serviceaccounts_json: '{"items": []}'
-      when: (rbac_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool)
+      when: (rbac_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool) or (rbac_slurp is not defined) or ((rbac_slurp.content | default('')) | length == 0)
 
     - name: Parse RBAC data
       set_fact:

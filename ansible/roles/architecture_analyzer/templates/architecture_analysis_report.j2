@@ -199,7 +199,7 @@ ERRO: Análise da distribuição de recursos falhou
 **Total de Componentes de Análise:** {{ total_count }}  
 **Análises Bem-sucedidas:** {{ success_count }}  
 **Análises Falharam:** {{ total_count - success_count }}  
-**Taxa de Sucesso:** {{ ((success_count / total_count) * 100) | round(2) }}%  
+**Taxa de Sucesso:** {% if total_count | default(0) > 0 %}{{ ((success_count / total_count) * 100) | round(2) }}%{% else %}N/A{% endif %}  
 
 ## Notas
 

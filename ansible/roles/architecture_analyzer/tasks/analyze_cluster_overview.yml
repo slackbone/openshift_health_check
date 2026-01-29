@@ -1,14 +1,23 @@
 ---
 - name: Analyze cluster overview
   block:
-    - name: Load cluster info data
-      include_vars:
-        file: "{{ data_output_path }}/cluster_info.json"
-        name: cluster_data
-      when: 
+    - name: Load cluster info data from host (controller or remote)
+      slurp:
+        src: "{{ data_output_path }}/cluster_info.json"
+      register: cluster_info_slurp
+      when:
         - data_collection_completed | bool
         - not ansible_check_mode | bool
       ignore_errors: true
+      failed_when: false
+
+    - name: Set cluster_data from slurped content
+      set_fact:
+        cluster_data: "{{ (cluster_info_slurp.content | b64decode) | from_json }}"
+      when:
+        - cluster_info_slurp is defined
+        - cluster_info_slurp.content is defined
+        - (cluster_info_slurp.content | length) > 0
 
     - name: Set default cluster data if not available
       set_fact:
@@ -17,7 +26,7 @@
           cluster_version: {}
           nodes_overview: "No nodes overview available"
           namespaces_overview: "No namespaces overview available"
-      when: (cluster_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool)
+      when: (cluster_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool) or (cluster_info_slurp is not defined) or ((cluster_info_slurp.content | default('')) | length == 0)
 
     - name: Initialize cluster_version_has_items
       set_fact:
