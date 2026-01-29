@@ -11,9 +11,9 @@
   vars:
     # Configurações de conexão com o cluster OpenShift
     # Aceita credenciais via:
-    # - inventário (openshift_cluster_url/openshift_token/openshift_username por host)
+    # - inventário (openshift_cluster_url ou cluster_url / openshift_token / openshift_username por host ou grupo)
     # - linha de comando (-e cluster_url/cluster_token/cluster_username)
-    openshift_cluster_url: "{{ cluster_url | default(hostvars[inventory_hostname].openshift_cluster_url | default('')) }}"
+    openshift_cluster_url: "{{ cluster_url | default(hostvars[inventory_hostname].openshift_cluster_url | default(hostvars[inventory_hostname].cluster_url | default(''))) }}"
     openshift_token: "{{ cluster_token | default(hostvars[inventory_hostname].openshift_token | default('')) }}"
     openshift_username: "{{ cluster_username | default(hostvars[inventory_hostname].openshift_username | default('')) }}"
     # Base path no remoto: HOME pode ser string vazia no bastion; garantir fallback para /tmp
@@ -31,6 +31,20 @@
     report_output_path: ""
     
   pre_tasks:
+    # Mostrar URL e host resolvidos (ajuda a verificar se o inventário está sendo aplicado)
+    - name: Mostrar URL do cluster resolvida para o host
+      debug:
+        msg: "Host: {{ inventory_hostname }} | openshift_cluster_url: {{ openshift_cluster_url }}"
+      when: openshift_cluster_url is defined and openshift_cluster_url != ""
+
+    - name: Falhar se openshift_cluster_url estiver vazia
+      fail:
+        msg: |
+          openshift_cluster_url não está definida para o host '{{ inventory_hostname }}'.
+          Defina no inventário (por host ou grupo) como openshift_cluster_url ou cluster_url,
+          ou passe na linha de comando: -e cluster_url="https://api.seu-cluster:6443"
+      when: openshift_cluster_url is not defined or openshift_cluster_url == ""
+
     # Definir cluster_name evitando loop recursivo
     # Primeiro tenta da variável -e cluster_name, depois do inventário, depois default
     - name: Definir cluster_name a partir de variáveis
