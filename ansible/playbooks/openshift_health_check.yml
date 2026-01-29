@@ -16,11 +16,12 @@
     openshift_cluster_url: "{{ cluster_url | default(hostvars[inventory_hostname].openshift_cluster_url | default('')) }}"
     openshift_token: "{{ cluster_token | default(hostvars[inventory_hostname].openshift_token | default('')) }}"
     openshift_username: "{{ cluster_username | default(hostvars[inventory_hostname].openshift_username | default('')) }}"
-    # Diretório temporário para kubeconfig gerado dinamicamente
-    kubeconfig_dir: "{{ playbook_dir }}/.kube"
+    # Diretório para kubeconfig: no host remoto (bastion) usa HOME do usuário remoto;
+    # em execução local usa playbook_dir para não criar caminhos do controlador no remoto
+    kubeconfig_dir: "{{ (ansible_connection == 'local' or inventory_hostname == 'localhost') | ternary(playbook_dir + '/.kube', (ansible_env.HOME | default('/tmp')) + '/.ansible_openshift_health_check/.kube') }}"
     openshift_kubeconfig: "{{ kubeconfig_path | default(kubeconfig_dir + '/config') }}"
-    # Configurações de saída dos relatórios
-    output_dir: "{{ playbook_dir }}/../reports"
+    # Saída dos relatórios: no remoto usa dir sob HOME; em local usa playbook_dir/../reports
+    output_dir: "{{ (ansible_connection == 'local' or inventory_hostname == 'localhost') | ternary(playbook_dir + '/../reports', (ansible_env.HOME | default('/tmp')) + '/openshift_health_check_reports') }}"
     timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
     # execution_id e paths serão definidos nas pre_tasks após cluster_name ser definido
     execution_id: ""
@@ -67,23 +68,7 @@
       environment:
         KUBECONFIG: "{{ openshift_kubeconfig }}"
     
-    # Verificar se o kubeconfig foi gerado com sucesso
-    - name: Verificar se kubeconfig foi gerado
-      stat:
-        path: "{{ openshift_kubeconfig }}"
-      register: kubeconfig_stat
-      when: (kubeconfig_path is not defined or kubeconfig_path == "")
-    
-    # Falhar se kubeconfig não foi gerado e oc login falhou
-    - name: Falhar se kubeconfig não foi gerado
-      fail:
-        msg: "Não foi possível gerar o kubeconfig. Verifique se oc está instalado e se as credenciais estão corretas."
-      when:
-        - (kubeconfig_path is not defined or kubeconfig_path == "")
-        - (oc_login_result is defined and oc_login_result.rc != 0)
-        - (kubeconfig_stat is not defined or not kubeconfig_stat.stat.exists)
-    
-    # Alternativa: Gerar kubeconfig manualmente se oc login falhar ou não disponível
+    # Alternativa: Gerar kubeconfig manualmente se oc login falhar (tentar antes de falhar)
     - name: Gerar kubeconfig manualmente (fallback)
       copy:
         content: |
@@ -107,13 +92,28 @@
               token: {{ openshift_token }}
         dest: "{{ openshift_kubeconfig }}"
         mode: '0600'
-      when: 
+      when:
         - openshift_cluster_url != ""
         - openshift_token != ""
         - openshift_username != ""
         - (kubeconfig_path is not defined or kubeconfig_path == "")
         - (oc_login_result is not defined or (oc_login_result.rc is defined and oc_login_result.rc != 0))
       ignore_errors: true
+
+    # Verificar se o kubeconfig existe (após oc login ou fallback)
+    - name: Verificar se kubeconfig foi gerado
+      stat:
+        path: "{{ openshift_kubeconfig }}"
+      register: kubeconfig_stat
+      when: (kubeconfig_path is not defined or kubeconfig_path == "")
+
+    # Falhar só se ainda não existir arquivo após fallback
+    - name: Falhar se kubeconfig não foi gerado
+      fail:
+        msg: "Não foi possível gerar o kubeconfig. Verifique se oc está instalado e se as credenciais estão corretas."
+      when:
+        - (kubeconfig_path is not defined or kubeconfig_path == "")
+        - (kubeconfig_stat is not defined or not kubeconfig_stat.stat.exists)
     
     # Validação das variáveis obrigatórias
     - name: Validar variáveis obrigatórias (URL e Token)
