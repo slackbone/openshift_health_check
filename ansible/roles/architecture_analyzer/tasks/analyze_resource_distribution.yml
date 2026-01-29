@@ -3,7 +3,7 @@
   block:
     - name: Load namespaces data
       include_vars:
-        file: "{{ data_output_path }}/raw_data/namespaces.json"
+        file: "{{ data_output_path }}/namespaces.json"
         name: namespaces_data
       when: 
         - data_collection_completed | bool
@@ -12,7 +12,7 @@
 
     - name: Load pods data
       include_vars:
-        file: "{{ data_output_path }}/raw_data/pods.json"
+        file: "{{ data_output_path }}/pods.json"
         name: pods_data
       when: 
         - data_collection_completed | bool
@@ -124,8 +124,7 @@
 
     - name: Set fact for resource distribution analysis status
       set_fact:
-        analysis_status:
-          resource_distribution: true
+        analysis_status: "{{ analysis_status | default({}) | combine({'resource_distribution': true}) }}"
 
     - name: Display resource distribution analysis status
       debug:
@@ -138,5 +137,4 @@
       
     - name: Set fact for resource distribution analysis status
       set_fact:
-        analysis_status:
-          resource_distribution: false
+        analysis_status: "{{ analysis_status | default({}) | combine({'resource_distribution': false}) }}"

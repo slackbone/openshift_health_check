@@ -9,7 +9,7 @@ analyze_storage_architecture: true
 analyze_operator_health: true
 analyze_resource_distribution: true
 
-# Output settings
+# Output settings (data_output_path is set by data_collector in consolidate_data)
 architecture_output_dir: "{{ report_output_path }}/architecture_analysis"
 analysis_format: "json"
 

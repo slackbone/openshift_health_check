@@ -3,7 +3,7 @@
   block:
     - name: Load RBAC data
       include_vars:
-        file: "{{ data_output_path }}/raw_data/rbac.json"
+        file: "{{ data_output_path }}/rbac.json"
         name: rbac_data
       when: 
         - data_collection_completed | bool

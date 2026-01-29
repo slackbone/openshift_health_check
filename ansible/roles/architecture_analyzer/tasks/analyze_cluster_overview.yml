@@ -3,7 +3,7 @@
   block:
     - name: Load cluster info data
       include_vars:
-        file: "{{ data_output_path }}/raw_data/cluster_info.json"
+        file: "{{ data_output_path }}/cluster_info.json"
         name: cluster_data
       when: 
         - data_collection_completed | bool
@@ -112,8 +112,7 @@
 
     - name: Set fact for cluster overview analysis status
       set_fact:
-        analysis_status:
-          cluster_overview: true
+        analysis_status: "{{ analysis_status | default({}) | combine({'cluster_overview': true}) }}"
 
     - name: Display cluster overview analysis status
       debug:
@@ -130,5 +129,4 @@
       
     - name: Set fact for cluster overview analysis status
       set_fact:
-        analysis_status:
-          cluster_overview: false
+        analysis_status: "{{ analysis_status | default({}) | combine({'cluster_overview': false}) }}"

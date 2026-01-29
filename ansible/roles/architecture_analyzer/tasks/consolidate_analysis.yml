@@ -51,12 +51,12 @@
           Architecture analysis completed!
           
           Analysis Status:
-          - Cluster Overview: {{ 'OK' if analysis_status.cluster_overview else 'Falhou' }}
-          - Node Analysis: {{ 'OK' if analysis_status.node_analysis else 'Falhou' }}
-          - Network Analysis: {{ 'OK' if analysis_status.network_analysis else 'Falhou' }}
-          - Storage Analysis: {{ 'OK' if analysis_status.storage_analysis else 'Falhou' }}
-          - Operator Analysis: {{ 'OK' if analysis_status.operator_analysis else 'Falhou' }}
-          - Resource Distribution: {{ 'OK' if analysis_status.resource_distribution else 'Falhou' }}
+          - Cluster Overview: {{ 'OK' if (analysis_status | default({})).get('cluster_overview', false) else 'Falhou' }}
+          - Node Analysis: {{ 'OK' if (analysis_status | default({})).get('node_analysis', false) else 'Falhou' }}
+          - Network Analysis: {{ 'OK' if (analysis_status | default({})).get('network_analysis', false) else 'Falhou' }}
+          - Storage Analysis: {{ 'OK' if (analysis_status | default({})).get('storage_analysis', false) else 'Falhou' }}
+          - Operator Analysis: {{ 'OK' if (analysis_status | default({})).get('operator_analysis', false) else 'Falhou' }}
+          - Resource Distribution: {{ 'OK' if (analysis_status | default({})).get('resource_distribution', false) else 'Falhou' }}
           
           Analysis saved to: {{ architecture_output_dir }}
 

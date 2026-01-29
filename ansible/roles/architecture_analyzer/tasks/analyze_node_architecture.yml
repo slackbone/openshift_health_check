@@ -3,7 +3,7 @@
   block:
     - name: Load nodes data
       include_vars:
-        file: "{{ data_output_path }}/raw_data/nodes.json"
+        file: "{{ data_output_path }}/nodes.json"
         name: nodes_data
       when: 
         - data_collection_completed | bool
@@ -71,8 +71,7 @@
 
     - name: Set fact for node analysis status
       set_fact:
-        analysis_status:
-          node_analysis: true
+        analysis_status: "{{ analysis_status | default({}) | combine({'node_analysis': true}) }}"
 
     - name: Display node analysis status
       debug:
@@ -85,5 +84,4 @@
       
     - name: Set fact for node analysis status
       set_fact:
-        analysis_status:
-          node_analysis: false
+        analysis_status: "{{ analysis_status | default({}) | combine({'node_analysis': false}) }}"

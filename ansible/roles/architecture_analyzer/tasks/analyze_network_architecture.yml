@@ -3,7 +3,7 @@
   block:
     - name: Load network-related data
       include_vars:
-        file: "{{ data_output_path }}/raw_data/services.json"
+        file: "{{ data_output_path }}/services.json"
         name: services_data
       when: 
         - data_collection_completed | bool
@@ -12,7 +12,7 @@
 
     - name: Load security configs for network policies
       include_vars:
-        file: "{{ data_output_path }}/raw_data/security_configs.json"
+        file: "{{ data_output_path }}/security_configs.json"
         name: security_data
       when: 
         - data_collection_completed | bool
@@ -106,8 +106,7 @@
 
     - name: Set fact for network analysis status
       set_fact:
-        analysis_status:
-          network_analysis: true
+        analysis_status: "{{ analysis_status | default({}) | combine({'network_analysis': true}) }}"
 
     - name: Display network analysis status
       debug:
@@ -120,5 +119,4 @@
       
     - name: Set fact for network analysis status
       set_fact:
-        analysis_status:
-          network_analysis: false
+        analysis_status: "{{ analysis_status | default({}) | combine({'network_analysis': false}) }}"

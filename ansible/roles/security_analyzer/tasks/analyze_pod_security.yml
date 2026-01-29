@@ -3,7 +3,7 @@
   block:
     - name: Load pods and security data
       include_vars:
-        file: "{{ data_output_path }}/raw_data/pods.json"
+        file: "{{ data_output_path }}/pods.json"
         name: pods_data
       when: 
         - data_collection_completed | bool
@@ -12,7 +12,7 @@
 
     - name: Load security configs
       include_vars:
-        file: "{{ data_output_path }}/raw_data/security_configs.json"
+        file: "{{ data_output_path }}/security_configs.json"
         name: security_data
       when: 
         - data_collection_completed | bool

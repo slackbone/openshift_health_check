@@ -3,7 +3,7 @@
   block:
     - name: Load operators data
       include_vars:
-        file: "{{ data_output_path }}/raw_data/operators.json"
+        file: "{{ data_output_path }}/operators.json"
         name: operators_data
       when: 
         - data_collection_completed | bool
@@ -86,8 +86,7 @@
 
     - name: Set fact for operator analysis status
       set_fact:
-        analysis_status:
-          operator_analysis: true
+        analysis_status: "{{ analysis_status | default({}) | combine({'operator_analysis': true}) }}"
 
     - name: Display operator analysis status
       debug:
@@ -100,5 +99,4 @@
       
     - name: Set fact for operator analysis status
       set_fact:
-        analysis_status:
-          operator_analysis: false
+        analysis_status: "{{ analysis_status | default({}) | combine({'operator_analysis': false}) }}"

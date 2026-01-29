@@ -24,7 +24,7 @@
 
     - name: Load namespaces data for storage analysis
       include_vars:
-        file: "{{ data_output_path }}/raw_data/namespaces.json"
+        file: "{{ data_output_path }}/namespaces.json"
         name: namespaces_data
       when: 
         - data_collection_completed | bool
@@ -75,8 +75,7 @@
 
     - name: Set fact for storage analysis status
       set_fact:
-        analysis_status:
-          storage_analysis: true
+        analysis_status: "{{ analysis_status | default({}) | combine({'storage_analysis': true}) }}"
 
     - name: Display storage analysis status
       debug:
@@ -89,5 +88,4 @@
       
     - name: Set fact for storage analysis status
       set_fact:
-        analysis_status:
-          storage_analysis: false
+        analysis_status: "{{ analysis_status | default({}) | combine({'storage_analysis': false}) }}"
