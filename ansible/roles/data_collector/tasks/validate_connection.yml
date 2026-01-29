@@ -54,7 +54,13 @@
 
 - name: Fail if cluster connectivity test fails
   fail:
-    msg: "Cannot connect to OpenShift cluster. Please check your credentials and cluster URL."
+    msg: |
+      Cannot connect to OpenShift cluster. Please check your credentials and cluster URL.
+      KUBECONFIG used: {{ openshift_kubeconfig }}
+      Cluster URL: {{ openshift_cluster_url }}
+      {{ cli_command }} cluster-info exit code: {{ cluster_connectivity.rc | default('N/A') }}
+      stdout: {{ cluster_connectivity.stdout | default('') }}
+      stderr: {{ cluster_connectivity.stderr | default('') }}
   when: cluster_connectivity is defined and cluster_connectivity.rc is defined and cluster_connectivity.rc != 0
 
 - name: Display cluster connectivity status
