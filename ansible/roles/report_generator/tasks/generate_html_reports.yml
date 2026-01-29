@@ -18,7 +18,7 @@
     total_components: "{{ data_collection_total_components | default(11) }}"
     successful_collections: "{{ data_collection_successful | default(11) }}"
     failed_collections: "{{ data_collection_failed | default(0) }}"
-    data_directory: "{{ data_collection_directory | default('/tmp/openshift_health_check/data') }}"
+    data_directory: "{{ data_collection_directory | default(((report_output_path | default('')) or '/tmp/openshift_health_check') + '/data_collection') }}"
     cluster_info_file: "{{ data_collection_files.cluster_info | default('cluster_info.json') }}"
     nodes_file: "{{ data_collection_files.nodes | default('nodes.json') }}"
     namespaces_file: "{{ data_collection_files.namespaces | default('namespaces.json') }}"

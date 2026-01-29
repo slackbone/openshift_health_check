@@ -1,8 +1,8 @@
 ---
 # Default variables for report_generator role
 
-# Output directory for reports
-reports_output_dir: "{{ report_output_path }}"
+# Output directory for reports (fallback se report_output_path vazio)
+reports_output_dir: "{{ (report_output_path | default('')) or '/tmp/openshift_health_check' }}"
 
 # Cluster information
 cluster_name: "openshift-cluster.example.com"

@@ -9,8 +9,8 @@ analyze_cost_optimization: false  # FinOps disabled by default
 analyze_node_optimization: true
 analyze_service_optimization: true
 
-# Output settings
-resource_optimization_output_dir: "{{ report_output_path }}/resource_optimization"
+# Output settings (fallback se report_output_path vazio)
+resource_optimization_output_dir: "{{ (report_output_path | default('')) or '/tmp/openshift_health_check' }}/resource_optimization"
 analysis_format: "json"
 
 # Optimization thresholds

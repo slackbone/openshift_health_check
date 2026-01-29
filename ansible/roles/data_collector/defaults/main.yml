@@ -25,8 +25,8 @@ namespace_filter: ""
 label_selector: ""
 field_selector: ""
 
-# Output settings
-data_output_dir: "{{ report_output_path }}/data_collection"
+# Output settings (fallback /tmp se report_output_path vazio, ex.: HOME vazio no bastion)
+data_output_dir: "{{ (report_output_path | default('')) or '/tmp/openshift_health_check' }}/data_collection"
 data_format: "json"
 compress_data: false
 

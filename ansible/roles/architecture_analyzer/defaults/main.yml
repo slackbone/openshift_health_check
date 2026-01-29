@@ -9,8 +9,8 @@ analyze_storage_architecture: true
 analyze_operator_health: true
 analyze_resource_distribution: true
 
-# Output settings (data_output_path is set by data_collector in consolidate_data)
-architecture_output_dir: "{{ report_output_path }}/architecture_analysis"
+# Output settings (fallback se report_output_path vazio, ex.: HOME vazio no bastion)
+architecture_output_dir: "{{ (report_output_path | default('')) or '/tmp/openshift_health_check' }}/architecture_analysis"
 analysis_format: "json"
 
 # Analysis thresholds

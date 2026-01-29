@@ -9,8 +9,8 @@ analyze_health_checks: true
 analyze_backup_policies: true
 analyze_monitoring: true
 
-# Output settings
-best_practices_output_dir: "{{ report_output_path }}/best_practices_analysis"
+# Output settings (fallback se report_output_path vazio)
+best_practices_output_dir: "{{ (report_output_path | default('')) or '/tmp/openshift_health_check' }}/best_practices_analysis"
 analysis_format: "json"
 
 # Best practices thresholds

@@ -8,8 +8,8 @@ analyze_pod_security: true
 analyze_secrets_management: true
 analyze_compliance: true
 
-# Output settings
-security_output_dir: "{{ report_output_path }}/security_analysis"
+# Output settings (fallback se report_output_path vazio)
+security_output_dir: "{{ (report_output_path | default('')) or '/tmp/openshift_health_check' }}/security_analysis"
 analysis_format: "json"
 
 # Security thresholds
