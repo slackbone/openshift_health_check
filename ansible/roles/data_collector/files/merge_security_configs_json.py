@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Merge security config JSON files into a single security_configs.json (used when jq is not available)."""
+"""Merge security config JSON files into a single security_configs.json. Deletes each
+file after reading to minimize peak disk usage on bastions with limited space."""
 import json
 import os
 
@@ -16,10 +17,20 @@ def main():
     d = {}
     for key, path in FILES:
         if os.path.isfile(path):
-            with open(path) as fp:
-                d[key] = json.load(fp)
+            try:
+                with open(path) as fp:
+                    d[key] = json.load(fp)
+            finally:
+                try:
+                    os.unlink(path)
+                except OSError:
+                    pass
     with open("security_configs.json", "w") as fp:
         json.dump(d, fp, indent=2)
+    try:
+        os.unlink("merge_security_configs_json.py")
+    except OSError:
+        pass
 
 if __name__ == "__main__":
     main()

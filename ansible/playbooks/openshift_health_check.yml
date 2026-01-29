@@ -18,12 +18,16 @@
     openshift_username: "{{ cluster_username | default(hostvars[inventory_hostname].openshift_username | default('')) }}"
     # Base path no remoto: HOME pode ser string vazia no bastion; garantir fallback para /tmp
     _remote_base: "{{ (ansible_env.HOME | default('')) or '/tmp' }}"
+    # Bastion com pouco espaço (ex.: 600 MB em /tmp): defina no inventário para o host:
+    #   remote_reports_base_path: "/mnt/volume"   # path com mais espaço para relatórios/dados
+    #   ansible_remote_tmp: "/mnt/volume/.ansible_tmp"   # evita "No space left" no mkdir do Ansible
+    _remote_reports_base: "{{ hostvars[inventory_hostname].remote_reports_base_path | default(_remote_base) }}"
     # Diretório para kubeconfig: no host remoto (bastion) usa HOME do usuário remoto;
     # em execução local usa playbook_dir para não criar caminhos do controlador no remoto
     kubeconfig_dir: "{{ (ansible_connection == 'local' or inventory_hostname == 'localhost') | ternary(playbook_dir + '/.kube', _remote_base + '/.ansible_openshift_health_check/.kube') }}"
     openshift_kubeconfig: "{{ kubeconfig_path | default(kubeconfig_dir + '/config') }}"
-    # Saída dos relatórios: no remoto usa dir sob HOME (ou /tmp); em local usa playbook_dir/../reports
-    output_dir: "{{ (ansible_connection == 'local' or inventory_hostname == 'localhost') | ternary(playbook_dir + '/../reports', _remote_base + '/openshift_health_check_reports') }}"
+    # Saída dos relatórios: no remoto usa _remote_reports_base (permite path com mais espaço)
+    output_dir: "{{ (ansible_connection == 'local' or inventory_hostname == 'localhost') | ternary(playbook_dir + '/../reports', _remote_reports_base + '/openshift_health_check_reports') }}"
     timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
     # execution_id e paths serão definidos nas pre_tasks após cluster_name ser definido
     execution_id: ""
@@ -57,6 +61,19 @@
         execution_id: "{{ cluster_name }}_{{ timestamp }}"
         reports_output_dir: "{{ output_dir }}/{{ execution_id }}"
         report_output_path: "{{ reports_output_dir }}"
+
+    # Criar base de relatórios no remoto quando remote_reports_base_path está definido
+    - name: Criar diretório base de relatórios no remoto (quando remote_reports_base_path definido)
+      file:
+        path: "{{ _remote_reports_base }}/openshift_health_check_reports"
+        state: directory
+        mode: '0755'
+      when:
+        - ansible_connection != 'local'
+        - inventory_hostname != 'localhost'
+        - remote_reports_base_path is defined
+        - remote_reports_base_path != ""
+
     # Criar diretório para kubeconfig gerado dinamicamente
     - name: Criar diretório para kubeconfig
       file:

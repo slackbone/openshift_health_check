@@ -15,6 +15,7 @@
         dest: "{{ data_output_dir }}/merge_security_configs_json.py"
         mode: '0755'
 
+    # Usa sempre Python para merge: lê e apaga cada arquivo após leitura, reduzindo pico de disco
     - name: Fetch security configs and build security_configs.json on remote
       shell: |
         set -e
@@ -25,20 +26,7 @@
         {{ cli_command }} get podsecuritypolicies --all-namespaces -o json > _psp.json 2>/dev/null || echo '{}' > _psp.json
         {{ cli_command }} get secrets --all-namespaces -o json > _secrets.json 2>/dev/null || echo '{}' > _secrets.json
         {{ cli_command }} get configmaps --all-namespaces -o json > _cm.json 2>/dev/null || echo '{}' > _cm.json
-        if command -v jq >/dev/null 2>&1; then
-          jq -n \
-            --slurpfile scc _scc.json \
-            --slurpfile np _np.json \
-            --slurpfile psp _psp.json \
-            --slurpfile secrets _secrets.json \
-            --slurpfile cm _cm.json \
-            --slurpfile meta .security_metadata.json \
-            '{securitycontextconstraints: $scc[0], networkpolicies_json: $np[0], podsecuritypolicies_json: $psp[0], secrets_json: $secrets[0], configmaps_json: $cm[0], collection_metadata: $meta[0]}' \
-            > security_configs.json
-        else
-          python3 merge_security_configs_json.py
-        fi
-        rm -f _scc.json _np.json _psp.json _secrets.json _cm.json .security_metadata.json merge_security_configs_json.py
+        python3 merge_security_configs_json.py
       args:
         executable: /bin/bash
       register: security_configs_build_result

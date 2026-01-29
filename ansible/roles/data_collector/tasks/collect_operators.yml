@@ -15,6 +15,8 @@
         dest: "{{ data_output_dir }}/merge_operators_json.py"
         mode: '0755'
 
+    # Usa sempre Python para merge: lê e apaga cada arquivo após leitura, reduzindo pico de disco
+    # (jq exigiria todos os arquivos em disco ao mesmo tempo; com /tmp de 600 MB no bastion falha)
     - name: Fetch operators data and build operators.json on remote
       shell: |
         set -e
@@ -24,22 +26,8 @@
         {{ cli_command }} get subscriptions --all-namespaces -o json > _sub.json
         {{ cli_command }} get installplans --all-namespaces -o json > _ip.json
         {{ cli_command }} get operatorgroups --all-namespaces -o json > _og.json
-        # catalogs pode não existir em algumas versões do OpenShift (ex.: OCP 4.x sem Operators 2.x)
         {{ cli_command }} get catalogs --all-namespaces -o json > _cat.json 2>/dev/null || echo '{}' > _cat.json
-        if command -v jq >/dev/null 2>&1; then
-          jq -n \
-            --slurpfile csv _csv.json \
-            --slurpfile sub _sub.json \
-            --slurpfile ip _ip.json \
-            --slurpfile og _og.json \
-            --slurpfile cat _cat.json \
-            --slurpfile cm .operators_metadata.json \
-            '{clusterserviceversions_json: $csv[0], subscriptions_json: $sub[0], installplans_json: $ip[0], operatorgroups_json: $og[0], catalogs_json: $cat[0], collection_metadata: $cm[0]}' \
-            > operators.json
-        else
-          python3 merge_operators_json.py
-        fi
-        rm -f _csv.json _sub.json _ip.json _og.json _cat.json .operators_metadata.json merge_operators_json.py
+        python3 merge_operators_json.py
       args:
         executable: /bin/bash
       register: operators_build_result

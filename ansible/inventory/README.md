@@ -260,6 +260,28 @@ ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
 oc auth can-i list nodes --all-namespaces
 ```
 
+### Erro: "No space left on device" no bastion
+
+**Causa:** Bastion com pouco espaço em `/tmp` ou no home (ex.: 600 MB); a coleta gera vários JSON grandes.
+
+**Solução:** Defina no inventário, para o host do bastion, um path com mais espaço (ex.: volume montado ou NFS):
+
+```yaml
+# Exemplo: host dev usando /mnt/dados para relatórios e temp do Ansible
+dev:
+  hosts:
+    dev-bastion:
+      ansible_host: ...
+      remote_reports_base_path: "/mnt/dados"
+      ansible_remote_tmp: "/mnt/dados/.ansible_tmp"
+      # ... openshift_cluster_url, openshift_token, etc.
+```
+
+- `remote_reports_base_path`: diretório onde ficam relatórios e dados da coleta (evita encher `/tmp` ou `$HOME`).
+- `ansible_remote_tmp`: diretório temporário do Ansible no remoto (evita falha ao criar `~/.ansible/tmp`).
+
+Crie o diretório no bastion se necessário: `mkdir -p /mnt/dados/.ansible_tmp`.
+
 ## Próximos Passos
 
 Após configurar o inventário:
