@@ -127,11 +127,11 @@ all:
       hosts:
         # ================================================================
         # CLUSTER 1: Desenvolvimento
-        # Bastion dedicado: timbiras-bastion (exemplo real)
+        # Bastion dedicado: dev-bastion (exemplo)
         # ================================================================
         development-cluster:
           # Configurações de conexão SSH ao bastion específico deste cluster
-          ansible_host: timbiras-bastion
+          ansible_host: dev-bastion
           ansible_user: roberto.menezes
           ansible_ssh_private_key_file: ~/.ssh/id_rsa
           # Ou use senha (não recomendado):

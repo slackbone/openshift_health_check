@@ -125,9 +125,9 @@ all:
   children:
     openshift_clusters:
       hosts:
-        # Cluster Dev - Bastion timbiras-bastion
+        # Cluster Dev - Bastion dev-bastion
         development-cluster:
-          ansible_host: timbiras-bastion
+          ansible_host: dev-bastion
           ansible_user: roberto.menezes
           ansible_ssh_private_key_file: ~/.ssh/id_rsa
           openshift_cluster_url: "https://api.dev.example.com:6443"
