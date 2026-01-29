@@ -1,0 +1,54 @@
+---
+# =============================================================================
+# EXEMPLO SIMPLES DE INVENTÁRIO - OpenShift Health Check
+# =============================================================================
+# Este é um exemplo mínimo e direto ao ponto.
+# Copie este arquivo para hosts.yml e ajuste apenas as 3 variáveis obrigatórias.
+# =============================================================================
+
+all:
+  children:
+    localhost:
+      hosts:
+        localhost:
+          ansible_connection: local
+          ansible_python_interpreter: "{{ ansible_playbook_python }}"
+          
+          # ================================================================
+          # CONFIGURAÇÕES OBRIGATÓRIAS - AJUSTE AQUI
+          # ================================================================
+          
+          # URL do API Server do cluster OpenShift
+          # Obtenha com: oc cluster-info
+          openshift_cluster_url: "https://api.cluster.example.com:6443"
+          
+          # Token de autenticação
+          # Obtenha com: oc whoami -t
+          openshift_token: "sha256~seu-token-aqui"
+          
+          # Usuário do OpenShift (obrigatório)
+          # Obtenha com: oc whoami
+          openshift_username: "seu-usuario"
+          
+          # Nome do cluster (aparecerá nos relatórios)
+          cluster_name: "meu-cluster"
+
+# =============================================================================
+# COMO USAR:
+# =============================================================================
+#
+# 1. Copie este arquivo:
+#    cp inventory/hosts.yml.simple inventory/hosts.yml
+#
+# 2. Edite hosts.yml e ajuste as 3 variáveis acima
+#
+# 3. Execute o playbook:
+#    ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml
+#
+# OU use variáveis via linha de comando (sobrescreve o inventário):
+#    ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
+#      -e cluster_url="https://api.cluster.example.com:6443" \
+#      -e cluster_token="sha256~seu-token" \
+#      -e cluster_name="meu-cluster"
+#
+# =============================================================================

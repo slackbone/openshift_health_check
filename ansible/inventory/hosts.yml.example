@@ -1,0 +1,256 @@
+---
+# =============================================================================
+# ARQUIVO DE INVENTÁRIO - OpenShift Health Check
+# =============================================================================
+# Este arquivo define os hosts onde o health check será executado.
+# 
+# IMPORTANTE: Este é um arquivo de EXEMPLO. Copie para hosts.yml e ajuste
+# conforme suas necessidades.
+#
+# O playbook pode ser executado de duas formas:
+# 1. Execução LOCAL: O playbook roda na máquina local e conecta ao cluster
+# 2. Execução REMOTA: O playbook roda em um servidor remoto (bastion)
+#
+# =============================================================================
+
+all:
+  children:
+    # ========================================================================
+    # EXECUÇÃO LOCAL (Recomendado)
+    # ========================================================================
+    # O playbook roda na máquina local e conecta diretamente ao cluster
+    # Use esta opção quando você tem acesso direto ao cluster
+    # ========================================================================
+    localhost:
+      hosts:
+        localhost:
+          ansible_connection: local
+          ansible_python_interpreter: "{{ ansible_playbook_python }}"
+          
+          # ================================================================
+          # CONFIGURAÇÕES DO CLUSTER (OBRIGATÓRIAS)
+          # ================================================================
+          # URL do API Server do cluster OpenShift
+          # Formato: https://api.<cluster-name>.<domain>:6443
+          # Exemplo: https://api.production.example.com:6443
+          openshift_cluster_url: "https://api.cluster.example.com:6443"
+          
+          # Token de autenticação do OpenShift
+          # Obtenha com: oc whoami -t
+          # Formato: sha256~<token>
+          openshift_token: "sha256~seu-token-aqui"
+          
+          # Usuário do OpenShift (obrigatório para gerar kubeconfig)
+          # Obtenha com: oc whoami
+          openshift_username: "seu-usuario-aqui"
+          
+          # Nome do cluster (usado para organizar relatórios)
+          # Este nome aparecerá nos relatórios gerados
+          cluster_name: "production-cluster"
+          
+          # ================================================================
+          # CONFIGURAÇÕES OPCIONAIS
+          # ================================================================
+          # Caminho para o arquivo kubeconfig (alternativa ao token)
+          # Se especificado, o token será ignorado
+          openshift_kubeconfig: "~/.kube/config"
+          
+          # Contexto do Kubernetes a ser usado (se usando kubeconfig)
+          openshift_context: "production/context-name"
+          
+          # ================================================================
+          # CONFIGURAÇÕES DE COLETA DE DADOS
+          # ================================================================
+          collect_cluster_info: true
+          collect_nodes: true
+          collect_namespaces: true
+          collect_pods: true
+          collect_services: true
+          collect_deployments: true
+          collect_rbac: true
+          collect_security_configs: true
+          collect_operators: true
+          collect_metrics: true
+          collect_events: true
+          
+          # ================================================================
+          # CONFIGURAÇÕES DE ANÁLISE
+          # ================================================================
+          analyze_cluster_overview: true
+          analyze_node_architecture: true
+          analyze_network_architecture: true
+          analyze_storage_architecture: true
+          analyze_operator_health: true
+          analyze_resource_distribution: true
+          
+          # ================================================================
+          # CONFIGURAÇÕES DE SEGURANÇA
+          # ================================================================
+          # Limites máximos permitidos (0 = não permitir)
+          max_privileged_containers: 0
+          max_root_containers: 0
+          max_host_network_pods: 0
+          max_host_pid_pods: 0
+          max_host_ipc_pods: 0
+          
+          # ================================================================
+          # CONFIGURAÇÕES DE ARQUITETURA
+          # ================================================================
+          min_master_nodes: 3
+          min_worker_nodes: 2
+          max_node_cpu_usage: 80
+          max_node_memory_usage: 80
+          max_pod_density_per_node: 100
+          
+          # ================================================================
+          # CONFIGURAÇÕES DE TIMEOUT
+          # ================================================================
+          command_timeout: 300
+          connection_timeout: 30
+          
+          # ================================================================
+          # CONFIGURAÇÕES DE FINOPS (Análise de Custos)
+          # ================================================================
+          # Desabilite estas opções se não quiser análise de custos
+          analyze_cost_optimization: true
+          enable_cost_analysis: true
+
+    # ========================================================================
+    # MÚLTIPLOS CLUSTERS COM BASTIONS DEDICADOS
+    # ========================================================================
+    # Use esta opção quando cada cluster tem seu próprio bastion com acesso
+    # exclusivo. Cada bastion só tem acesso ao seu cluster específico.
+    # O playbook será executado remotamente em cada bastion via SSH.
+    # ========================================================================
+    openshift_clusters:
+      hosts:
+        # ================================================================
+        # CLUSTER 1: Desenvolvimento
+        # Bastion dedicado: timbiras-bastion (exemplo real)
+        # ================================================================
+        development-cluster:
+          # Configurações de conexão SSH ao bastion específico deste cluster
+          ansible_host: timbiras-bastion
+          ansible_user: roberto.menezes
+          ansible_ssh_private_key_file: ~/.ssh/id_rsa
+          # Ou use senha (não recomendado):
+          # ansible_password: "sua-senha-aqui"
+          
+          # Configurações do cluster OpenShift (acessível apenas deste bastion)
+          openshift_cluster_url: "https://api.dev.example.com:6443"
+          openshift_token: "sha256~token-dev-aqui"
+          openshift_username: "roberto.menezes"
+          cluster_name: "development-cluster"
+          
+          # Configurações específicas de desenvolvimento
+          max_privileged_containers: 2
+          max_root_containers: 2
+          min_master_nodes: 1
+          min_worker_nodes: 1
+          analyze_cost_optimization: false
+          enable_cost_analysis: false
+          
+        # ================================================================
+        # CLUSTER 2: Produção
+        # Bastion dedicado: bastion-prod
+        # ================================================================
+        production-cluster:
+          # Configurações de conexão SSH ao bastion específico deste cluster
+          ansible_host: bastion-prod.example.com
+          ansible_user: admin
+          ansible_ssh_private_key_file: ~/.ssh/id_rsa
+          
+          # Configurações do cluster OpenShift (acessível apenas deste bastion)
+          openshift_cluster_url: "https://api.production.example.com:6443"
+          openshift_token: "sha256~token-producao-aqui"
+          openshift_username: "usuario-producao"
+          cluster_name: "production-cluster"
+          
+          # Configurações específicas de produção
+          max_privileged_containers: 0
+          max_root_containers: 0
+          min_master_nodes: 3
+          min_worker_nodes: 3
+          analyze_cost_optimization: false
+          enable_cost_analysis: false
+          
+        # ================================================================
+        # CLUSTER 3: Staging
+        # Bastion dedicado: bastion-staging
+        # ================================================================
+        staging-cluster:
+          ansible_host: bastion-staging.example.com
+          ansible_user: admin
+          ansible_ssh_private_key_file: ~/.ssh/id_rsa
+          
+          openshift_cluster_url: "https://api.staging.example.com:6443"
+          openshift_token: "sha256~token-staging-aqui"
+          openshift_username: "usuario-staging"
+          cluster_name: "staging-cluster"
+          
+          # Configurações específicas de staging (mais flexíveis)
+          max_privileged_containers: 1
+          max_root_containers: 1
+          min_master_nodes: 3
+          min_worker_nodes: 2
+          analyze_cost_optimization: false
+          
+        # ================================================================
+        # CLUSTER 3: Desenvolvimento
+        # ================================================================
+        development-cluster:
+          ansible_host: localhost
+          ansible_connection: local
+          ansible_python_interpreter: "{{ ansible_playbook_python }}"
+          
+          openshift_cluster_url: "https://api.dev.example.com:6443"
+          openshift_token: "sha256~token-dev-aqui"
+          cluster_name: "development-cluster"
+          
+          # Configurações específicas de desenvolvimento (mais permissivas)
+          max_privileged_containers: 2
+          max_root_containers: 2
+          min_master_nodes: 1
+          min_worker_nodes: 1
+          analyze_cost_optimization: false
+          collect_metrics: false
+          collect_events: false
+
+# =============================================================================
+# EXEMPLO DE USO
+# =============================================================================
+#
+# 1. EXECUÇÃO LOCAL (usando variáveis do inventário):
+#    ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml
+#
+# 2. EXECUÇÃO LOCAL (sobrescrevendo variáveis via linha de comando):
+#    ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
+#      -e cluster_url="https://api.cluster.example.com:6443" \
+#      -e cluster_token="sha256~token-aqui" \
+#      -e cluster_name="meu-cluster"
+#
+# 3. EXECUÇÃO REMOTA em cluster específico:
+#    ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
+#      --limit production-cluster
+#
+# 4. EXECUÇÃO em múltiplos clusters:
+#    ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
+#      --limit openshift_clusters
+#
+# 5. EXECUÇÃO com tags específicas:
+#    ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
+#      -e cluster_url="https://api.cluster.example.com:6443" \
+#      -e cluster_token="sha256~token-aqui" \
+#      --tags seguranca
+#
+# =============================================================================
+# NOTAS IMPORTANTES
+# =============================================================================
+#
+# - O token OpenShift pode ser obtido com: oc whoami -t
+# - O token geralmente começa com "sha256~"
+# - Para produção, considere usar Ansible Vault para proteger tokens
+# - O cluster_name será usado para nomear os diretórios de relatórios
+# - Relatórios serão salvos em: reports/{cluster_name}_{timestamp}/
+#
+# =============================================================================

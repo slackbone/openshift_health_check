@@ -6,9 +6,15 @@
   gather_facts: true
   vars:
     # Configurações de conexão com o cluster OpenShift
-    openshift_cluster_url: "{{ cluster_url | default('') }}"
-    openshift_token: "{{ cluster_token | default('') }}"
-    openshift_kubeconfig: "{{ kubeconfig_path | default('~/.kube/config') }}"
+    # Aceita credenciais via:
+    # - inventário (openshift_cluster_url/openshift_token/openshift_username por host)
+    # - linha de comando (-e cluster_url/cluster_token/cluster_username)
+    openshift_cluster_url: "{{ cluster_url | default(hostvars[inventory_hostname].openshift_cluster_url | default('')) }}"
+    openshift_token: "{{ cluster_token | default(hostvars[inventory_hostname].openshift_token | default('')) }}"
+    openshift_username: "{{ cluster_username | default(hostvars[inventory_hostname].openshift_username | default('')) }}"
+    # Diretório temporário para kubeconfig gerado dinamicamente
+    kubeconfig_dir: "{{ playbook_dir }}/.kube"
+    openshift_kubeconfig: "{{ kubeconfig_path | default(kubeconfig_dir + '/config') }}"
     # Configurações de saída dos relatórios
     output_dir: "{{ playbook_dir }}/../reports"
     timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
@@ -18,8 +24,83 @@
     report_output_path: "{{ reports_output_dir }}"
     
   pre_tasks:
+    # Criar diretório para kubeconfig gerado dinamicamente
+    - name: Criar diretório para kubeconfig
+      file:
+        path: "{{ kubeconfig_dir }}"
+        state: directory
+        mode: '0700'
+      when: kubeconfig_path is not defined or kubeconfig_path == ""
+    
+    # Gerar kubeconfig dinamicamente usando usuário e token
+    - name: Gerar kubeconfig dinamicamente usando oc login
+      shell: |
+        oc login {{ openshift_cluster_url }} \
+          --token={{ openshift_token }} \
+          --username={{ openshift_username }} \
+          --insecure-skip-tls-verify=true \
+          --kubeconfig={{ openshift_kubeconfig }}
+      register: oc_login_result
+      failed_when: false
+      changed_when: oc_login_result.rc == 0
+      when: 
+        - openshift_cluster_url != ""
+        - openshift_token != ""
+        - openshift_username != ""
+        - (kubeconfig_path is not defined or kubeconfig_path == "")
+      environment:
+        KUBECONFIG: "{{ openshift_kubeconfig }}"
+    
+    # Verificar se o kubeconfig foi gerado com sucesso
+    - name: Verificar se kubeconfig foi gerado
+      stat:
+        path: "{{ openshift_kubeconfig }}"
+      register: kubeconfig_stat
+      when: (kubeconfig_path is not defined or kubeconfig_path == "")
+    
+    # Falhar se kubeconfig não foi gerado e oc login falhou
+    - name: Falhar se kubeconfig não foi gerado
+      fail:
+        msg: "Não foi possível gerar o kubeconfig. Verifique se oc está instalado e se as credenciais estão corretas."
+      when:
+        - (kubeconfig_path is not defined or kubeconfig_path == "")
+        - (oc_login_result is defined and oc_login_result.rc != 0)
+        - (kubeconfig_stat is not defined or not kubeconfig_stat.stat.exists)
+    
+    # Alternativa: Gerar kubeconfig manualmente se oc login falhar ou não disponível
+    - name: Gerar kubeconfig manualmente (fallback)
+      copy:
+        content: |
+          apiVersion: v1
+          kind: Config
+          clusters:
+          - cluster:
+              insecure-skip-tls-verify: true
+              server: {{ openshift_cluster_url }}
+            name: {{ cluster_name }}
+          contexts:
+          - context:
+              cluster: {{ cluster_name }}
+              namespace: default
+              user: {{ openshift_username }}/{{ cluster_name }}
+            name: default/{{ cluster_name }}/{{ openshift_username }}
+          current-context: default/{{ cluster_name }}/{{ openshift_username }}
+          users:
+          - name: {{ openshift_username }}/{{ cluster_name }}
+            user:
+              token: {{ openshift_token }}
+        dest: "{{ openshift_kubeconfig }}"
+        mode: '0600'
+      when: 
+        - openshift_cluster_url != ""
+        - openshift_token != ""
+        - openshift_username != ""
+        - (kubeconfig_path is not defined or kubeconfig_path == "")
+        - (oc_login_result is not defined or (oc_login_result.rc is defined and oc_login_result.rc != 0))
+      ignore_errors: true
+    
     # Validação das variáveis obrigatórias
-    - name: Validar variáveis obrigatórias
+    - name: Validar variáveis obrigatórias (URL e Token)
       fail:
         msg: "Variável obrigatória '{{ item }}' não foi definida"
       when: 
@@ -27,6 +108,14 @@
       loop:
         - "{{ openshift_cluster_url }}"
         - "{{ openshift_token }}"
+    
+    # Validar usuário apenas se kubeconfig não foi fornecido
+    - name: Validar usuário quando kubeconfig não fornecido
+      fail:
+        msg: "Variável 'openshift_username' é obrigatória quando kubeconfig não é fornecido. Forneça via -e cluster_username ou no inventário."
+      when:
+        - (kubeconfig_path is not defined or kubeconfig_path == "")
+        - (openshift_username is not defined or openshift_username == "")
         
     # Criação da estrutura de diretórios organizada
     - name: Criar diretório principal da execução

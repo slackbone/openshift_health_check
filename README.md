@@ -272,7 +272,10 @@ all:
           ansible_user: admin
           openshift_cluster_url: "https://api.cluster1.example.com:6443"
           openshift_token: "your-token-here"
+          openshift_username: "usuario@example.com"
 ```
+
+**Nota:** O playbook gera automaticamente o arquivo `kubeconfig` dentro do diretório `ansible/.kube/config` usando o usuário e token fornecidos. Não é necessário ter um kubeconfig pré-existente. Para mais detalhes, consulte: **[Geração Dinâmica de Kubeconfig](ansible/inventory/KUBECONFIG_DINAMICO.md)**
 
 ## Estrutura de Saída
 
@@ -401,17 +404,69 @@ ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
 
 ### 5. Execução em Múltiplos Clusters
 ```bash
-# Executar em todos os clusters configurados
+# Executar em todos os clusters configurados (via script)
 ./examples/run_health_check_multiple_clusters.sh
 
-# Executar em cluster específico
+# Executar em cluster específico (via script)
 ./examples/run_health_check_multiple_clusters.sh -c production-cluster
 
-# Executar em modo dry-run
+# Executar em modo dry-run (via script)
 ./examples/run_health_check_multiple_clusters.sh -d
 
-# Executar com verbose
+# Executar com verbose (via script)
 ./examples/run_health_check_multiple_clusters.sh -c production-cluster -v
+```
+
+#### 5.1 Execução em múltiplos clusters via Ansible diretamente
+
+Usando o inventário `ansible/inventory/hosts_multiplos_clusters.yml` (ou `hosts.yml` configurado com o grupo `openshift_clusters`):
+
+```bash
+cd ansible
+
+# Executar em todos os clusters do grupo openshift_clusters
+ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
+  --limit openshift_clusters
+
+# Executar apenas em um cluster específico (por exemplo, production-cluster)
+ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
+  --limit production-cluster
+
+# Executar em múltiplos clusters específicos
+ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
+  --limit "production-cluster,staging-cluster"
+
+# Executar em paralelo (mais rápido)
+ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
+  --limit openshift_clusters \
+  --forks 5
+```
+
+#### 5.2 Execução em múltiplos clusters SEM FinOps (sem análise de custos)
+
+Para garantir que nenhuma análise de custos seja executada (FinOps desativado):
+
+```bash
+cd ansible
+
+# Em todos os clusters, desabilitando análise de custos
+ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
+  --limit openshift_clusters \
+  -e analyze_cost_optimization=false \
+  -e enable_cost_analysis=false
+
+# Apenas em um cluster específico, sem FinOps
+ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
+  --limit production-cluster \
+  -e analyze_cost_optimization=false \
+  -e enable_cost_analysis=false
+
+# Em múltiplos clusters, apenas segurança e arquitetura, sem FinOps
+ansible-playbook -i inventory/hosts.yml playbooks/openshift_health_check.yml \
+  --limit "production-cluster,staging-cluster" \
+  --tags "seguranca,arquitetura" \
+  -e analyze_cost_optimization=false \
+  -e enable_cost_analysis=false
 ```
 
 ## Solução de Problemas
@@ -479,7 +534,7 @@ diff reports/production-cluster_20241215_143022/consolidated/consolidated_health
 
 ```
 ansible/
-├── playbooks/           # Playbooks principais
+├── playbooks/          # Playbooks principais
 ├── roles/              # Roles do Ansible
 │   ├── data_collector/
 │   ├── architecture_analyzer/
@@ -511,6 +566,8 @@ Para suporte e dúvidas:
 - **[Arquitetura](ARCHITECTURE.md)**: Documentação técnica da arquitetura da ferramenta
 - **[Exemplos de Uso](ansible/examples/)**: Exemplos práticos de configuração e uso
 - **[Exemplos SEM FinOps](ansible/examples/README_SEM_FINOPS.md)**: Exemplos específicos excluindo funcionalidades de FinOps
+- **[Geração Dinâmica de Kubeconfig](ansible/inventory/KUBECONFIG_DINAMICO.md)**: Como o playbook gera automaticamente o kubeconfig usando usuário e token
+- **[Guia de Bastions Múltiplos](ansible/inventory/GUIA_BASTIONS_MULTIPLOS.md)**: Como configurar quando cada cluster tem seu próprio bastion dedicado
 - **[Changelog](CHANGELOG.md)**: Histórico de mudanças e versões
 
 ## Changelog
