@@ -12,15 +12,17 @@
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
-    - name: Get nodes overview
-      command: "{{ cli_command }} get nodes -o wide"
+    - name: Get nodes overview (JSON)
+      command: "{{ cli_command }} get nodes -o json"
       register: nodes_overview_result
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
+      failed_when: false
 
-    - name: Get namespaces overview
-      command: "{{ cli_command }} get namespaces"
+    - name: Get namespaces overview (JSON)
+      command: "{{ cli_command }} get namespaces -o json"
       register: namespaces_overview_result
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
+      failed_when: false
 
     - name: Parse cluster version JSON for payload
       set_fact:
@@ -28,16 +30,28 @@
       when: cluster_version_result.stdout is defined and (cluster_version_result.stdout | length) > 0
       ignore_errors: true
 
-    - name: Build cluster info dict for valid JSON (escapes newlines in strings)
+    - name: Parse nodes overview JSON for payload
+      set_fact:
+        _nodes_overview_dict: "{{ (nodes_overview_result.stdout | default('{}')) | from_json }}"
+      when: nodes_overview_result.stdout is defined and (nodes_overview_result.stdout | length) > 0
+      ignore_errors: true
+
+    - name: Parse namespaces overview JSON for payload
+      set_fact:
+        _namespaces_overview_dict: "{{ (namespaces_overview_result.stdout | default('{}')) | from_json }}"
+      when: namespaces_overview_result.stdout is defined and (namespaces_overview_result.stdout | length) > 0
+      ignore_errors: true
+
+    - name: Build cluster info dict (all JSON from CLI where supported)
       set_fact:
         _cluster_info_payload:
           cluster_info: "{{ cluster_info_result.stdout | default('') }}"
           cluster_version: "{{ _cluster_version_dict | default({}) }}"
-          nodes_overview: "{{ nodes_overview_result.stdout | default('') }}"
-          namespaces_overview: "{{ namespaces_overview_result.stdout | default('') }}"
+          nodes_json: "{{ _nodes_overview_dict | default({}) }}"
+          namespaces_json: "{{ _namespaces_overview_dict | default({}) }}"
           collection_metadata: "{{ collection_metadata | default({}) }}"
 
-    - name: Save cluster info to file (valid JSON with escaped newlines)
+    - name: Save cluster info to file (JSON from CLI; cluster-info único texto sem -o json)
       copy:
         content: "{{ _cluster_info_payload | to_nice_json }}"
         dest: "{{ data_output_dir }}/cluster_info.json"

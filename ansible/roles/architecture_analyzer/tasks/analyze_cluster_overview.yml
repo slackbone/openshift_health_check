@@ -27,8 +27,8 @@
             cluster_data:
               cluster_info: "No cluster info available"
               cluster_version: {}
-              nodes_overview: "No nodes overview available"
-              namespaces_overview: "No namespaces overview available"
+              nodes_json: {}
+              namespaces_json: {}
       when:
         - cluster_info_slurp is defined
         - cluster_info_slurp.content is defined
@@ -39,8 +39,8 @@
         cluster_data:
           cluster_info: "No cluster info available"
           cluster_version: {}
-          nodes_overview: "No nodes overview available"
-          namespaces_overview: "No namespaces overview available"
+          nodes_json: {}
+          namespaces_json: {}
       when: (cluster_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool) or (cluster_info_slurp is not defined) or ((cluster_info_slurp.content | default('')) | length == 0)
 
     - name: Initialize cluster_version_has_items
@@ -72,32 +72,25 @@
         cluster_version: "Unknown"
       when: (cluster_data is not defined) or (cluster_data.cluster_version is not defined) or (cluster_version_has_items is not defined) or (cluster_version_has_items is not iterable) or (cluster_version_has_items is string) or ((cluster_version_has_items | length) == 0)
 
-    - name: Count nodes from overview
+    - name: Count nodes from nodes_json (preferred) or legacy nodes_overview string
       set_fact:
-        total_nodes: "{{ cluster_data.nodes_overview.split('\n') | length - 1 }}"
-      when: 
-        - cluster_data is defined
-        - cluster_data.nodes_overview is defined
-        - cluster_data.nodes_overview != "No nodes overview available"
+        total_nodes: "{{ (cluster_data.nodes_json.get('items', []) | length) if (cluster_data.nodes_json is defined and cluster_data.nodes_json is mapping) else ((cluster_data.nodes_overview.split('\n') | length - 1) if (cluster_data.nodes_overview is defined and cluster_data.nodes_overview != 'No nodes overview available' and cluster_data.nodes_overview != '') else 0) }}"
+      when: cluster_data is defined
 
     - name: Set default node count
       set_fact:
         total_nodes: 0
-      when: (cluster_data is not defined) or (cluster_data.nodes_overview is not defined) or (cluster_data.nodes_overview == "No nodes overview available") or (cluster_data.nodes_overview == "")
+      when: cluster_data is not defined
 
-    - name: Count namespaces from overview
+    - name: Count namespaces from namespaces_json (preferred) or legacy namespaces_overview string
       set_fact:
-        total_namespaces: "{{ cluster_data.namespaces_overview.split('\n') | length - 1 }}"
-      when: 
-        - cluster_data is defined
-        - cluster_data.namespaces_overview is defined
-        - cluster_data.namespaces_overview != "No namespaces overview available"
-        - cluster_data.namespaces_overview != ""
+        total_namespaces: "{{ (cluster_data.namespaces_json.get('items', []) | length) if (cluster_data.namespaces_json is defined and cluster_data.namespaces_json is mapping) else ((cluster_data.namespaces_overview.split('\n') | length - 1) if (cluster_data.namespaces_overview is defined and cluster_data.namespaces_overview != 'No namespaces overview available' and cluster_data.namespaces_overview != '') else 0) }}"
+      when: cluster_data is defined
 
     - name: Set default namespace count
       set_fact:
         total_namespaces: 0
-      when: (cluster_data is not defined) or (cluster_data.namespaces_overview is not defined) or (cluster_data.namespaces_overview == "No namespaces overview available") or (cluster_data.namespaces_overview == "")
+      when: cluster_data is not defined
 
     - name: Initialize cluster health issues
       set_fact:

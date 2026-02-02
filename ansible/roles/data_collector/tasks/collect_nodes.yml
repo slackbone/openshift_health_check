@@ -1,19 +1,9 @@
 ---
 - name: Collect nodes information
   block:
-    - name: Get nodes detailed information
+    - name: Get nodes detailed information (JSON; labels em metadata.labels)
       command: "{{ cli_command }} get nodes -o json"
       register: nodes_json_result
-      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
-
-    - name: Get nodes description
-      command: "{{ cli_command }} describe nodes"
-      register: nodes_describe_result
-      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
-
-    - name: Get nodes with labels
-      command: "{{ cli_command }} get nodes --show-labels"
-      register: nodes_labels_result
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 
     - name: Get machine config pools (OpenShift specific)
@@ -46,17 +36,22 @@
       when: machines_result.stdout is defined and (machines_result.stdout | length) > 0
       ignore_errors: true
 
-    - name: Build nodes payload dict for valid JSON (escapes newlines in describe/labels)
+    - name: Build nodes_labels list from nodes JSON (name + labels per node)
+      set_fact:
+        _nodes_labels_list: "{{ _nodes_labels_list | default([]) + [{'name': item.metadata.name | default(''), 'labels': item.metadata.labels | default({})}] }}"
+      loop: "{{ (_nodes_json_dict | default({})).get('items', []) }}"
+      when: (_nodes_json_dict | default({})).get('items', []) | length > 0
+
+    - name: Build nodes payload dict (all JSON; labels derivados de nodes_json)
       set_fact:
         _nodes_payload:
           nodes_json: "{{ _nodes_json_dict | default({}) }}"
-          nodes_describe: "{{ nodes_describe_result.stdout | default('') }}"
-          nodes_labels: "{{ nodes_labels_result.stdout | default('') }}"
+          nodes_labels: "{{ _nodes_labels_list | default([]) }}"
           machine_config_pools: "{{ _mcp_dict | default({}) }}"
           machines: "{{ _machines_dict | default({}) }}"
           collection_metadata: "{{ collection_metadata | default({}) }}"
 
-    - name: Save nodes data to file (valid JSON with escaped newlines)
+    - name: Save nodes data to file (tudo JSON; sem saída texto)
       copy:
         content: "{{ _nodes_payload | to_nice_json }}"
         dest: "{{ data_output_dir }}/nodes.json"

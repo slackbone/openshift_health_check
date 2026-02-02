@@ -1,14 +1,9 @@
 ---
 - name: Collect pods information
   block:
-    - name: Get pods detailed information
+    - name: Get pods detailed information (JSON; labels em metadata.labels)
       command: "{{ cli_command }} get pods --all-namespaces -o json"
       register: pods_json_result
-      environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
-
-    - name: Get pods with labels
-      command: "{{ cli_command }} get pods --all-namespaces --show-labels"
-      register: pods_labels_result
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 
     - name: Get pod templates
@@ -29,15 +24,21 @@
       when: pod_templates_result.stdout is defined and (pod_templates_result.stdout | length) > 0
       ignore_errors: true
 
-    - name: Build pods payload dict for valid JSON (escapes newlines in pods_labels)
+    - name: Build pods_labels list from pods JSON (namespace, name, labels per pod)
+      set_fact:
+        _pods_labels_list: "{{ _pods_labels_list | default([]) + [{'namespace': item.metadata.namespace | default(''), 'name': item.metadata.name | default(''), 'labels': item.metadata.labels | default({})}] }}"
+      loop: "{{ (_pods_json_dict | default({})).get('items', []) }}"
+      when: (_pods_json_dict | default({})).get('items', []) | length > 0
+
+    - name: Build pods payload dict (all JSON; labels derivados de pods_json)
       set_fact:
         _pods_payload:
           pods_json: "{{ _pods_json_dict | default({}) }}"
-          pods_labels: "{{ pods_labels_result.stdout | default('') }}"
+          pods_labels: "{{ _pods_labels_list | default([]) }}"
           pod_templates: "{{ _pod_templates_dict | default({}) }}"
           collection_metadata: "{{ collection_metadata | default({}) }}"
 
-    - name: Save pods data to file (valid JSON with escaped newlines)
+    - name: Save pods data to file (tudo JSON; sem saída texto)
       copy:
         content: "{{ _pods_payload | to_nice_json }}"
         dest: "{{ data_output_dir }}/pods.json"
