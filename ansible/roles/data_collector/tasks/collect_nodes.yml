@@ -28,17 +28,37 @@
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
-    - name: Save nodes data to file
+    - name: Parse nodes JSON for payload
+      set_fact:
+        _nodes_json_dict: "{{ (nodes_json_result.stdout | default('{}')) | from_json }}"
+      when: nodes_json_result.stdout is defined and (nodes_json_result.stdout | length) > 0
+      ignore_errors: true
+
+    - name: Parse machine config pools JSON for payload
+      set_fact:
+        _mcp_dict: "{{ (machine_config_pools_result.stdout | default('{}')) | from_json }}"
+      when: machine_config_pools_result.stdout is defined and (machine_config_pools_result.stdout | length) > 0
+      ignore_errors: true
+
+    - name: Parse machines JSON for payload
+      set_fact:
+        _machines_dict: "{{ (machines_result.stdout | default('{}')) | from_json }}"
+      when: machines_result.stdout is defined and (machines_result.stdout | length) > 0
+      ignore_errors: true
+
+    - name: Build nodes payload dict for valid JSON (escapes newlines in describe/labels)
+      set_fact:
+        _nodes_payload:
+          nodes_json: "{{ _nodes_json_dict | default({}) }}"
+          nodes_describe: "{{ nodes_describe_result.stdout | default('') }}"
+          nodes_labels: "{{ nodes_labels_result.stdout | default('') }}"
+          machine_config_pools: "{{ _mcp_dict | default({}) }}"
+          machines: "{{ _machines_dict | default({}) }}"
+          collection_metadata: "{{ collection_metadata | default({}) }}"
+
+    - name: Save nodes data to file (valid JSON with escaped newlines)
       copy:
-        content: |
-          {
-            "nodes_json": {{ nodes_json_result.stdout }},
-            "nodes_describe": "{{ nodes_describe_result.stdout }}",
-            "nodes_labels": "{{ nodes_labels_result.stdout }}",
-            "machine_config_pools": {{ machine_config_pools_result.stdout | default('{}') }},
-            "machines": {{ machines_result.stdout | default('{}') }},
-            "collection_metadata": {{ collection_metadata | to_nice_json }}
-          }
+        content: "{{ _nodes_payload | to_nice_json }}"
         dest: "{{ data_output_dir }}/nodes.json"
         mode: '0644'
 

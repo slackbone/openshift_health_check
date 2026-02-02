@@ -22,16 +22,32 @@
       failed_when: false
 
     - name: Set namespaces_data from slurped content
-      set_fact:
-        namespaces_data: "{{ (namespaces_slurp.content | b64decode) | from_json }}"
+      block:
+        - name: Parse namespaces JSON
+          set_fact:
+            namespaces_data: "{{ (namespaces_slurp.content | b64decode) | from_json }}"
+      rescue:
+        - name: Set default namespaces data on parse error
+          set_fact:
+            namespaces_data:
+              namespaces_json: '{"items": []}'
+              resource_quotas: '{"items": []}'
+              limit_ranges: '{"items": []}'
       when:
         - namespaces_slurp is defined
         - namespaces_slurp.content is defined
         - (namespaces_slurp.content | length) > 0
 
     - name: Set pods_data from slurped content
-      set_fact:
-        pods_data: "{{ (pods_slurp.content | b64decode) | from_json }}"
+      block:
+        - name: Parse pods JSON
+          set_fact:
+            pods_data: "{{ (pods_slurp.content | b64decode) | from_json }}"
+      rescue:
+        - name: Set default pods data on parse error (e.g. control chars in JSON)
+          set_fact:
+            pods_data:
+              pods_json: '{"items": []}'
       when:
         - pods_slurp is defined
         - pods_slurp.content is defined
@@ -47,12 +63,13 @@
           pods_json: '{"items": []}'
       when: (namespaces_data is not defined) or (pods_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool) or (namespaces_slurp is not defined) or ((namespaces_slurp.content | default('')) | length == 0) or (pods_slurp is not defined) or ((pods_slurp.content | default('')) | length == 0)
 
+    # Aceitar *_json já como dict (slurp+from_json ou novo formato) ou como string (from_json)
     - name: Parse data
       set_fact:
-        namespaces_list_raw: "{{ namespaces_data.namespaces_json | default('{\"items\": []}') | from_json }}"
-        resource_quotas_list_raw: "{{ namespaces_data.resource_quotas | default('{\"items\": []}') | from_json }}"
-        limit_ranges_list_raw: "{{ namespaces_data.limit_ranges | default('{\"items\": []}') | from_json }}"
-        pods_list_raw: "{{ pods_data.pods_json | default('{\"items\": []}') | from_json }}"
+        namespaces_list_raw: "{{ (namespaces_data.namespaces_json if (namespaces_data.namespaces_json is defined and namespaces_data.namespaces_json is mapping) else (namespaces_data.namespaces_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
+        resource_quotas_list_raw: "{{ (namespaces_data.resource_quotas if (namespaces_data.resource_quotas is defined and namespaces_data.resource_quotas is mapping) else (namespaces_data.resource_quotas | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
+        limit_ranges_list_raw: "{{ (namespaces_data.limit_ranges if (namespaces_data.limit_ranges is defined and namespaces_data.limit_ranges is mapping) else (namespaces_data.limit_ranges | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
+        pods_list_raw: "{{ (pods_data.pods_json if (pods_data.pods_json is defined and pods_data.pods_json is mapping) else (pods_data.pods_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
       when: namespaces_data is defined and pods_data is defined
 
     - name: Ensure resource lists are dicts with items

@@ -36,16 +36,17 @@
           nodes_labels: "No nodes labels available"
       when: (nodes_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool) or (nodes_slurp is not defined) or ((nodes_slurp.content | default('')) | length == 0)
 
+    # nodes_json pode ser dict (novo nodes.json com to_nice_json) ou string (formato antigo)
     - name: Parse nodes JSON
       set_fact:
-        nodes_list_raw: "{{ nodes_data.nodes_json | from_json }}"
-      when: nodes_data.nodes_json is defined
+        nodes_list_raw: "{{ (nodes_data.nodes_json if (nodes_data.nodes_json is defined and nodes_data.nodes_json is mapping) else (nodes_data.nodes_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
+      when: nodes_data is defined
 
     - name: Set default nodes list
       set_fact:
         nodes_list_raw:
           items: []
-      when: nodes_data.nodes_json is not defined
+      when: nodes_data is not defined
 
     - name: Ensure nodes_list is a dict with items
       set_fact:

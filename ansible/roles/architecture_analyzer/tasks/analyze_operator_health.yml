@@ -28,12 +28,13 @@
           operatorgroups_json: '{"items": []}'
       when: (operators_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool) or (operators_slurp is not defined) or ((operators_slurp.content | default('')) | length == 0)
 
+    # Aceitar *_json já como dict (slurp+from_json) ou como string (from_json)
     - name: Parse operators data
       set_fact:
-        csv_list_raw: "{{ operators_data.clusterserviceversions_json | default('{\"items\": []}') | from_json }}"
-        subscriptions_list_raw: "{{ operators_data.subscriptions_json | default('{\"items\": []}') | from_json }}"
-        installplans_list_raw: "{{ operators_data.installplans_json | default('{\"items\": []}') | from_json }}"
-        operatorgroups_list_raw: "{{ operators_data.operatorgroups_json | default('{\"items\": []}') | from_json }}"
+        csv_list_raw: "{{ (operators_data.clusterserviceversions_json if (operators_data.clusterserviceversions_json is defined and operators_data.clusterserviceversions_json is mapping) else (operators_data.clusterserviceversions_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
+        subscriptions_list_raw: "{{ (operators_data.subscriptions_json if (operators_data.subscriptions_json is defined and operators_data.subscriptions_json is mapping) else (operators_data.subscriptions_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
+        installplans_list_raw: "{{ (operators_data.installplans_json if (operators_data.installplans_json is defined and operators_data.installplans_json is mapping) else (operators_data.installplans_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
+        operatorgroups_list_raw: "{{ (operators_data.operatorgroups_json if (operators_data.operatorgroups_json is defined and operators_data.operatorgroups_json is mapping) else (operators_data.operatorgroups_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
       when: operators_data is defined
 
     - name: Ensure operator lists are dicts with items

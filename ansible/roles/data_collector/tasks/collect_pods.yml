@@ -17,15 +17,29 @@
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
-    - name: Save pods data to file
+    - name: Parse pods JSON for payload
+      set_fact:
+        _pods_json_dict: "{{ (pods_json_result.stdout | default('{}')) | from_json }}"
+      when: pods_json_result.stdout is defined and (pods_json_result.stdout | length) > 0
+      ignore_errors: true
+
+    - name: Parse pod templates JSON for payload
+      set_fact:
+        _pod_templates_dict: "{{ (pod_templates_result.stdout | default('{}')) | from_json }}"
+      when: pod_templates_result.stdout is defined and (pod_templates_result.stdout | length) > 0
+      ignore_errors: true
+
+    - name: Build pods payload dict for valid JSON (escapes newlines in pods_labels)
+      set_fact:
+        _pods_payload:
+          pods_json: "{{ _pods_json_dict | default({}) }}"
+          pods_labels: "{{ pods_labels_result.stdout | default('') }}"
+          pod_templates: "{{ _pod_templates_dict | default({}) }}"
+          collection_metadata: "{{ collection_metadata | default({}) }}"
+
+    - name: Save pods data to file (valid JSON with escaped newlines)
       copy:
-        content: |
-          {
-            "pods_json": {{ pods_json_result.stdout }},
-            "pods_labels": "{{ pods_labels_result.stdout }}",
-            "pod_templates": {{ pod_templates_result.stdout | default('{}') }},
-            "collection_metadata": {{ collection_metadata | to_nice_json }}
-          }
+        content: "{{ _pods_payload | to_nice_json }}"
         dest: "{{ data_output_dir }}/pods.json"
         mode: '0644'
 
