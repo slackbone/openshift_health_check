@@ -29,13 +29,14 @@
           serviceaccounts_json: '{"items": []}'
       when: (rbac_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool) or (rbac_slurp is not defined) or ((rbac_slurp.content | default('')) | length == 0)
 
+    # Aceitar *_json já como dict (slurp+from_json) ou como string (from_json)
     - name: Parse RBAC data
       set_fact:
-        cluster_roles_raw: "{{ rbac_data.clusterroles_json | default('{\"items\": []}') | from_json }}"
-        cluster_role_bindings_raw: "{{ rbac_data.clusterrolebindings_json | default('{\"items\": []}') | from_json }}"
-        roles_raw: "{{ rbac_data.roles_json | default('{\"items\": []}') | from_json }}"
-        role_bindings_raw: "{{ rbac_data.rolebindings_json | default('{\"items\": []}') | from_json }}"
-        service_accounts_raw: "{{ rbac_data.serviceaccounts_json | default('{\"items\": []}') | from_json }}"
+        cluster_roles_raw: "{{ (rbac_data.clusterroles_json if (rbac_data.clusterroles_json is defined and rbac_data.clusterroles_json is mapping) else (rbac_data.clusterroles_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
+        cluster_role_bindings_raw: "{{ (rbac_data.clusterrolebindings_json if (rbac_data.clusterrolebindings_json is defined and rbac_data.clusterrolebindings_json is mapping) else (rbac_data.clusterrolebindings_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
+        roles_raw: "{{ (rbac_data.roles_json if (rbac_data.roles_json is defined and rbac_data.roles_json is mapping) else (rbac_data.roles_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
+        role_bindings_raw: "{{ (rbac_data.rolebindings_json if (rbac_data.rolebindings_json is defined and rbac_data.rolebindings_json is mapping) else (rbac_data.rolebindings_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
+        service_accounts_raw: "{{ (rbac_data.serviceaccounts_json if (rbac_data.serviceaccounts_json is defined and rbac_data.serviceaccounts_json is mapping) else (rbac_data.serviceaccounts_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
       when: rbac_data is defined
 
     - name: Ensure RBAC lists are dicts with items

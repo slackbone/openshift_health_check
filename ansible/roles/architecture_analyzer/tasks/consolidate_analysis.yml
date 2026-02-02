@@ -1,4 +1,9 @@
 ---
+# Garantir architecture_output_dir a partir do play (hostvars) antes de criar o diretório
+- name: Garantir architecture_output_dir com path válido
+  set_fact:
+    architecture_output_dir: "{{ ((hostvars[inventory_hostname] | default({})).get('reports_output_dir') or (hostvars[inventory_hostname] | default({})).get('report_output_path') or '/tmp/openshift_health_check') }}/architecture_analysis"
+
 - name: Consolidate architecture analysis
   block:
     - name: Initialize architecture_analysis if not exists

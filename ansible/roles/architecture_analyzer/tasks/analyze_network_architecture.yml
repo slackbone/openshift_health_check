@@ -48,12 +48,13 @@
           networkpolicies_json: '{"items": []}'
       when: (services_data is not defined) or (security_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool) or (services_slurp is not defined) or ((services_slurp.content | default('')) | length == 0) or (security_slurp is not defined) or ((security_slurp.content | default('')) | length == 0)
 
+    # Aceitar services_json etc. já como dict (slurp+from_json) ou como string (from_json)
     - name: Parse network data
       set_fact:
-        services_list_raw: "{{ services_data.services_json | default('{\"items\": []}') | from_json }}"
-        routes_list_raw: "{{ services_data.routes_json | default('{\"items\": []}') | from_json }}"
-        ingresses_list_raw: "{{ services_data.ingresses_json | default('{\"items\": []}') | from_json }}"
-        network_policies_list_raw: "{{ security_data.networkpolicies_json | default('{\"items\": []}') | from_json }}"
+        services_list_raw: "{{ (services_data.services_json if (services_data.services_json is defined and services_data.services_json is mapping) else (services_data.services_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
+        routes_list_raw: "{{ (services_data.routes_json if (services_data.routes_json is defined and services_data.routes_json is mapping) else (services_data.routes_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
+        ingresses_list_raw: "{{ (services_data.ingresses_json if (services_data.ingresses_json is defined and services_data.ingresses_json is mapping) else (services_data.ingresses_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
+        network_policies_list_raw: "{{ (security_data.networkpolicies_json if (security_data.networkpolicies_json is defined and security_data.networkpolicies_json is mapping) else (security_data.networkpolicies_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
       when: services_data is defined and security_data is defined
 
     - name: Ensure network lists are dicts with items

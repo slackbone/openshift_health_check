@@ -1,4 +1,9 @@
 ---
+# Garantir architecture_output_dir a partir do play (hostvars) quando a role roda no remoto
+- name: Garantir architecture_output_dir com path válido
+  set_fact:
+    architecture_output_dir: "{{ ((hostvars[inventory_hostname] | default({})).get('reports_output_dir') or (hostvars[inventory_hostname] | default({})).get('report_output_path') or '/tmp/openshift_health_check') }}/architecture_analysis"
+
 - name: Analyze cluster overview
   block:
     - name: Load cluster info data from host (controller or remote)
@@ -12,8 +17,18 @@
       failed_when: false
 
     - name: Set cluster_data from slurped content
-      set_fact:
-        cluster_data: "{{ (cluster_info_slurp.content | b64decode) | from_json }}"
+      block:
+        - name: Parse cluster_info JSON
+          set_fact:
+            cluster_data: "{{ (cluster_info_slurp.content | b64decode) | from_json }}"
+      rescue:
+        - name: Set default cluster data on parse error (e.g. control chars in JSON)
+          set_fact:
+            cluster_data:
+              cluster_info: "No cluster info available"
+              cluster_version: {}
+              nodes_overview: "No nodes overview available"
+              namespaces_overview: "No namespaces overview available"
       when:
         - cluster_info_slurp is defined
         - cluster_info_slurp.content is defined

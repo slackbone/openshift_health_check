@@ -12,8 +12,17 @@
       failed_when: false
 
     - name: Set nodes_data from slurped content
-      set_fact:
-        nodes_data: "{{ (nodes_slurp.content | b64decode) | from_json }}"
+      block:
+        - name: Parse nodes JSON
+          set_fact:
+            nodes_data: "{{ (nodes_slurp.content | b64decode) | from_json }}"
+      rescue:
+        - name: Set default nodes data on parse error
+          set_fact:
+            nodes_data:
+              nodes_json: '{"items": []}'
+              nodes_describe: "No nodes data available"
+              nodes_labels: "No nodes labels available"
       when:
         - nodes_slurp is defined
         - nodes_slurp.content is defined

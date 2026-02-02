@@ -22,16 +22,24 @@
       register: namespaces_overview_result
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 
-    - name: Save cluster info to file
+    - name: Parse cluster version JSON for payload
+      set_fact:
+        _cluster_version_dict: "{{ (cluster_version_result.stdout | default('{}')) | from_json }}"
+      when: cluster_version_result.stdout is defined and (cluster_version_result.stdout | length) > 0
+      ignore_errors: true
+
+    - name: Build cluster info dict for valid JSON (escapes newlines in strings)
+      set_fact:
+        _cluster_info_payload:
+          cluster_info: "{{ cluster_info_result.stdout | default('') }}"
+          cluster_version: "{{ _cluster_version_dict | default({}) }}"
+          nodes_overview: "{{ nodes_overview_result.stdout | default('') }}"
+          namespaces_overview: "{{ namespaces_overview_result.stdout | default('') }}"
+          collection_metadata: "{{ collection_metadata | default({}) }}"
+
+    - name: Save cluster info to file (valid JSON with escaped newlines)
       copy:
-        content: |
-          {
-            "cluster_info": "{{ cluster_info_result.stdout }}",
-            "cluster_version": {{ cluster_version_result.stdout | default('{}') }},
-            "nodes_overview": "{{ nodes_overview_result.stdout }}",
-            "namespaces_overview": "{{ namespaces_overview_result.stdout }}",
-            "collection_metadata": {{ collection_metadata | to_nice_json }}
-          }
+        content: "{{ _cluster_info_payload | to_nice_json }}"
         dest: "{{ data_output_dir }}/cluster_info.json"
         mode: '0644'
 
