@@ -219,27 +219,37 @@
         
 
   roles:
-    # Role para coleta de dados do cluster
+    # Role para coleta de dados do cluster (data_output_dir explícito para usar report_output_path das pre_tasks)
     - role: data_collector
+      vars:
+        data_output_dir: "{{ report_output_path }}/data_collection"
       tags: ['coleta_dados', 'todos']
       
-    # Role para análise de arquitetura
+    # Role para análise de arquitetura (path explícito para usar report_output_path das pre_tasks)
     - role: architecture_analyzer
+      vars:
+        architecture_output_dir: "{{ report_output_path }}/architecture_analysis"
       tags: ['arquitetura', 'todos']
-      
+
     # Role para análise de segurança
     - role: security_analyzer
+      vars:
+        security_output_dir: "{{ report_output_path }}/security_analysis"
       tags: ['seguranca', 'todos']
-      
+
     # Role para análise de boas práticas
     - role: best_practices_analyzer
+      vars:
+        best_practices_output_dir: "{{ report_output_path }}/best_practices_analysis"
       tags: ['boas_praticas', 'todos']
-      
+
     # Role para otimização de recursos
     - role: resource_optimizer
+      vars:
+        resource_optimization_output_dir: "{{ report_output_path }}/resource_optimization"
       tags: ['recursos', 'todos']
-      
-    # Role para geração de relatórios
+
+    # Role para geração de relatórios (usa reports_output_dir definido nas pre_tasks)
     - role: report_generator
       tags: ['relatorios', 'todos']
 
