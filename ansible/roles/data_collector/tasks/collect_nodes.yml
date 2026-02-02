@@ -39,13 +39,9 @@
       when: machines_result.stdout is defined and (machines_result.stdout | length) > 0
       ignore_errors: true
 
-    - name: Build nodes_labels list from nodes JSON (name + labels per node)
+    - name: Build nodes_labels list from nodes JSON (uma tarefa, sem loop por nó)
       set_fact:
-        _nodes_labels_list: "{{ _nodes_labels_list | default([]) + [{'name': item.metadata.name | default(''), 'labels': item.metadata.labels | default({})}] }}"
-      loop: "{{ (_nodes_json_dict | default({})).get('items', []) }}"
-      loop_control:
-        label: "{{ item.metadata.name | default('') }}"
-      when: (_nodes_json_dict | default({})).get('items', []) | length > 0
+        _nodes_labels_list: "{{ (_nodes_json_dict | default({})) | json_query('items[*].{name: metadata.name, labels: metadata.labels}') | default([]) }}"
 
     - name: Build nodes payload dict (all JSON; labels derivados de nodes_json)
       set_fact:
