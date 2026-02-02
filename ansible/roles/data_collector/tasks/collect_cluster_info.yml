@@ -4,23 +4,27 @@
     - name: Get cluster info
       command: "{{ cli_command }} cluster-info"
       register: cluster_info_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 
     - name: Get cluster version details
       command: "{{ cli_command }} get clusterversion -o json"
       register: cluster_version_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get nodes overview (JSON)
       command: "{{ cli_command }} get nodes -o json"
       register: nodes_overview_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get namespaces overview (JSON)
       command: "{{ cli_command }} get namespaces -o json"
       register: namespaces_overview_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 

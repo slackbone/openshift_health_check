@@ -31,6 +31,7 @@
       args:
         executable: /bin/bash
       register: operators_build_result
+      no_log: true
       failed_when: operators_build_result.rc != 0
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 

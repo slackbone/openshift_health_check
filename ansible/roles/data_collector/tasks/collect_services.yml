@@ -4,23 +4,27 @@
     - name: Get services detailed information
       command: "{{ cli_command }} get services --all-namespaces -o json"
       register: services_json_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 
     - name: Get routes (OpenShift specific)
       command: "{{ cli_command }} get routes --all-namespaces -o json"
       register: routes_json_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get ingresses
       command: "{{ cli_command }} get ingresses --all-namespaces -o json"
       register: ingresses_json_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get endpoints
       command: "{{ cli_command }} get endpoints --all-namespaces -o json"
       register: endpoints_json_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 

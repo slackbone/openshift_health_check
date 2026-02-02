@@ -30,6 +30,7 @@
       args:
         executable: /bin/bash
       register: security_configs_build_result
+      no_log: true
       failed_when: security_configs_build_result.rc != 0
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 

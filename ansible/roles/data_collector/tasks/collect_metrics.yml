@@ -4,30 +4,35 @@
     - name: Get cluster metrics (if available)
       command: "{{ cli_command }} get --raw /metrics"
       register: cluster_metrics_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get top nodes
       command: "{{ cli_command }} adm top nodes"
       register: top_nodes_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get top pods
       command: "{{ cli_command }} adm top pods --all-namespaces"
       register: top_pods_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get resource usage by namespace
       command: "{{ cli_command }} adm top pods --all-namespaces --sort-by=cpu"
       register: top_pods_cpu_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get resource usage by memory
       command: "{{ cli_command }} adm top pods --all-namespaces --sort-by=memory"
       register: top_pods_memory_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 

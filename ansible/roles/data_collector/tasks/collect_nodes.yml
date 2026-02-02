@@ -4,17 +4,20 @@
     - name: Get nodes detailed information (JSON; labels em metadata.labels)
       command: "{{ cli_command }} get nodes -o json"
       register: nodes_json_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 
     - name: Get machine config pools (OpenShift specific)
       command: "{{ cli_command }} get machineconfigpools -o json"
       register: machine_config_pools_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 
     - name: Get machines (OpenShift specific)
       command: "{{ cli_command }} get machines -A -o json"
       register: machines_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 

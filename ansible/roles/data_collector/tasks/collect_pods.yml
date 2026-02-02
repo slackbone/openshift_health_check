@@ -4,11 +4,13 @@
     - name: Get pods detailed information (JSON; labels em metadata.labels)
       command: "{{ cli_command }} get pods --all-namespaces -o json"
       register: pods_json_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 
     - name: Get pod templates
       command: "{{ cli_command }} get podtemplates --all-namespaces -o json"
       register: pod_templates_result
+      no_log: true
       environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
       failed_when: false
 

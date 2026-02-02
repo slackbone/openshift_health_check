@@ -54,6 +54,7 @@
 - name: Test cluster connectivity
   command: "{{ cli_command }} cluster-info"
   register: cluster_connectivity
+  no_log: true
   failed_when: false
   changed_when: false
   environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
@@ -76,11 +77,12 @@
 - name: Get cluster version information
   command: "{{ cli_command }} version"
   register: cluster_version
+  no_log: true
   environment: "{{ cluster_env | default({'KUBECONFIG': openshift_kubeconfig}) }}"
 
-- name: Display cluster version
+- name: Display cluster version (summary)
   debug:
-    msg: "{{ cluster_version.stdout_lines }}"
+    msg: "{{ (cluster_version.stdout_lines | default([]))[0:2] | join(' | ') }}"
 
 - name: Set fact for collection metadata
   set_fact:
