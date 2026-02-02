@@ -43,6 +43,8 @@
       set_fact:
         _nodes_labels_list: "{{ _nodes_labels_list | default([]) + [{'name': item.metadata.name | default(''), 'labels': item.metadata.labels | default({})}] }}"
       loop: "{{ (_nodes_json_dict | default({})).get('items', []) }}"
+      loop_control:
+        label: "{{ item.metadata.name | default('') }}"
       when: (_nodes_json_dict | default({})).get('items', []) | length > 0
 
     - name: Build nodes payload dict (all JSON; labels derivados de nodes_json)
