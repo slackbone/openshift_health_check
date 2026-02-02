@@ -1,4 +1,10 @@
 ---
+# Garantir path completo (report_output_path das pre_tasks; evita /data_collection quando vars da role são avaliados cedo)
+- name: Garantir data_output_dir a partir de report_output_path
+  set_fact:
+    data_output_dir: "{{ (report_output_path | default('')) }}/data_collection"
+  when: (report_output_path | default('')) != ""
+
 - name: Create data output directory
   file:
     path: "{{ data_output_dir }}"
