@@ -24,8 +24,9 @@ galaxy_info:
     - markdown
     - health-check
 
+# Sem data_collector aqui: o playbook já roda data_collector primeiro.
+# As outras roles são dependências para quem rodar só --tags relatorios.
 dependencies:
-  - role: data_collector
   - role: architecture_analyzer
   - role: security_analyzer
   - role: best_practices_analyzer

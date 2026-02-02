@@ -22,5 +22,6 @@ galaxy_info:
     - architecture
     - analysis
 
-dependencies:
-  - role: data_collector
+# Sem dependency em data_collector: o playbook já executa data_collector antes desta role.
+# Evita rodar data_collector (e validate_connection) de novo antes de cada analyzer.
+dependencies: []

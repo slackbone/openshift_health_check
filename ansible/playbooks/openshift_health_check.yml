@@ -1,13 +1,16 @@
 ---
 # Playbook principal para Avaliação de Saúde do OpenShift
 # Este playbook executa uma análise abrangente de clusters OpenShift 4.17
-# NOTA: Se você está vendo execução duplicada, verifique:
-# 1. Se há múltiplos hosts no inventory (use --limit para especificar um host)
-# 2. Se há aliases duplicados no inventory (ex: 'dev' e 'development-cluster' apontando para o mesmo host)
-# 3. Se o inventory está sendo carregado duas vezes (verifique ansible.cfg)
+# NOTA: Se você está vendo "volta ao início" (pre_tasks/conectividade de novo após data_collector):
+# - Com múltiplos hosts no inventory, cada tarefa roda em todos os hosts (strategy: linear).
+# - Para rodar só em um cluster: ansible-playbook ... --limit dev
+# - A primeira pre_task exibe "Iniciando health check para host: <nome>" para cada host.
 - name: Avaliação de Saúde do OpenShift
   hosts: all
   gather_facts: true
+  # Com múltiplos hosts, linear faz cada tarefa rodar em todos os hosts antes da próxima
+  # (evita que, após data_collector, as pre_tasks rodem de novo para o próximo host)
+  strategy: linear
   vars:
     # Configurações de conexão com o cluster OpenShift
     # Aceita credenciais via:
@@ -35,6 +38,10 @@
     report_output_path: ""
     
   pre_tasks:
+    - name: Iniciar playbook para host
+      debug:
+        msg: "=== Iniciando health check para host: {{ inventory_hostname }} (cluster: {{ cluster_name | default('(ainda não definido)') }}) ==="
+
     # Garantir path de escrita no remoto a partir do inventário (host/group vars)
     # set_fact garante que remote_reports_base_path do inventário seja usado após conexão
     - name: Definir base de relatórios no remoto a partir do inventário

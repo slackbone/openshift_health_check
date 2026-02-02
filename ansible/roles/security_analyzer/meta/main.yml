@@ -22,5 +22,5 @@ galaxy_info:
     - security
     - compliance
 
-dependencies:
-  - role: data_collector
+# Sem dependency em data_collector: o playbook já executa data_collector antes desta role.
+dependencies: []
