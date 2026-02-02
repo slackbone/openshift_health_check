@@ -1,9 +1,9 @@
 ---
-# Garantir path completo (report_output_path das pre_tasks; evita /data_collection quando vars da role são avaliados cedo)
-- name: Garantir data_output_dir a partir de report_output_path
+# Garantir path completo: ler reports_output_dir do host (definido nas pre_tasks do play)
+# hostvars garante que o path do play seja usado quando a role roda no remoto
+- name: Garantir data_output_dir com path válido
   set_fact:
-    data_output_dir: "{{ (report_output_path | default('')) }}/data_collection"
-  when: (report_output_path | default('')) != ""
+    data_output_dir: "{{ ((hostvars[inventory_hostname] | default({})).get('reports_output_dir') or (hostvars[inventory_hostname] | default({})).get('report_output_path') or '/tmp/openshift_health_check') }}/data_collection"
 
 - name: Create data output directory
   file:
