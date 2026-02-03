@@ -26,9 +26,13 @@
       when: pod_templates_result.stdout is defined and (pod_templates_result.stdout | length) > 0
       ignore_errors: true
 
-    - name: Build pods_labels list from pods JSON (uma tarefa, sem loop por pod)
+    - name: Build pods_labels list from pods JSON (namespace, name, labels per pod)
       set_fact:
-        _pods_labels_list: "{{ (_pods_json_dict | default({})) | json_query('items[*].{namespace: metadata.namespace, name: metadata.name, labels: metadata.labels}') | default([]) }}"
+        _pods_labels_list: "{{ _pods_labels_list | default([]) + [{'namespace': item.metadata.namespace | default(''), 'name': item.metadata.name | default(''), 'labels': item.metadata.labels | default({})}] }}"
+      loop: "{{ (_pods_json_dict | default({})).get('items', []) }}"
+      loop_control:
+        label: "{{ item.metadata.namespace | default('') }}/{{ item.metadata.name | default('') }}"
+      when: (_pods_json_dict | default({})).get('items', []) | length > 0
 
     - name: Build pods payload dict (all JSON; labels derivados de pods_json)
       set_fact:
