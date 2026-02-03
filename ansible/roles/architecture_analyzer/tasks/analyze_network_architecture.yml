@@ -5,6 +5,7 @@
       slurp:
         src: "{{ data_output_path }}/services.json"
       register: services_slurp
+      no_log: true
       when:
         - data_collection_completed | bool
         - not ansible_check_mode | bool
@@ -15,6 +16,7 @@
       slurp:
         src: "{{ data_output_path }}/security_configs.json"
       register: security_slurp
+      no_log: true
       when:
         - data_collection_completed | bool
         - not ansible_check_mode | bool
@@ -32,6 +34,7 @@
     - name: Set security_data from slurped content
       set_fact:
         security_data: "{{ (security_slurp.content | b64decode) | from_json }}"
+      no_log: true
       when:
         - security_slurp is defined
         - security_slurp.content is defined

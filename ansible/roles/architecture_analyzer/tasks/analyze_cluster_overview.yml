@@ -10,6 +10,7 @@
       slurp:
         src: "{{ data_output_path }}/cluster_info.json"
       register: cluster_info_slurp
+      no_log: true
       when:
         - data_collection_completed | bool
         - not ansible_check_mode | bool

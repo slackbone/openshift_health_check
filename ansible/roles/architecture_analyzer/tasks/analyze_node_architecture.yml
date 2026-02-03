@@ -5,6 +5,7 @@
       slurp:
         src: "{{ data_output_path }}/nodes.json"
       register: nodes_slurp
+      no_log: true
       when:
         - data_collection_completed | bool
         - not ansible_check_mode | bool

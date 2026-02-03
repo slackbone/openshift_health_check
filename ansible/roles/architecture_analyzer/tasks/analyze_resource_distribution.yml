@@ -5,6 +5,7 @@
       slurp:
         src: "{{ data_output_path }}/namespaces.json"
       register: namespaces_slurp
+      no_log: true
       when:
         - data_collection_completed | bool
         - not ansible_check_mode | bool
@@ -15,6 +16,7 @@
       slurp:
         src: "{{ data_output_path }}/pods.json"
       register: pods_slurp
+      no_log: true
       when:
         - data_collection_completed | bool
         - not ansible_check_mode | bool
@@ -70,6 +72,7 @@
         resource_quotas_list_raw: "{{ (namespaces_data.resource_quotas if (namespaces_data.resource_quotas is defined and namespaces_data.resource_quotas is mapping) else (namespaces_data.resource_quotas | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
         limit_ranges_list_raw: "{{ (namespaces_data.limit_ranges if (namespaces_data.limit_ranges is defined and namespaces_data.limit_ranges is mapping) else (namespaces_data.limit_ranges | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
         pods_list_raw: "{{ (pods_data.pods_json if (pods_data.pods_json is defined and pods_data.pods_json is mapping) else (pods_data.pods_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
+      no_log: true
       when: namespaces_data is defined and pods_data is defined
 
     - name: Ensure resource lists are dicts with items
@@ -82,6 +85,7 @@
         resource_quotas_list_items: "{{ (resource_quotas_list.get('items', [])) if (resource_quotas_list is mapping) else [] }}"
         limit_ranges_list_items: "{{ (limit_ranges_list.get('items', [])) if (limit_ranges_list is mapping) else [] }}"
         pods_list_items: "{{ (pods_list.get('items', [])) if (pods_list is mapping) else [] }}"
+      no_log: true
 
     - name: Analyze namespace distribution
       set_fact:

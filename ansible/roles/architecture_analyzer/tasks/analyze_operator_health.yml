@@ -5,6 +5,7 @@
       slurp:
         src: "{{ data_output_path }}/operators.json"
       register: operators_slurp
+      no_log: true
       when:
         - data_collection_completed | bool
         - not ansible_check_mode | bool
@@ -14,6 +15,7 @@
     - name: Set operators_data from slurped content
       set_fact:
         operators_data: "{{ (operators_slurp.content | b64decode) | from_json }}"
+      no_log: true
       when:
         - operators_slurp is defined
         - operators_slurp.content is defined
@@ -35,6 +37,7 @@
         subscriptions_list_raw: "{{ (operators_data.subscriptions_json if (operators_data.subscriptions_json is defined and operators_data.subscriptions_json is mapping) else (operators_data.subscriptions_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
         installplans_list_raw: "{{ (operators_data.installplans_json if (operators_data.installplans_json is defined and operators_data.installplans_json is mapping) else (operators_data.installplans_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
         operatorgroups_list_raw: "{{ (operators_data.operatorgroups_json if (operators_data.operatorgroups_json is defined and operators_data.operatorgroups_json is mapping) else (operators_data.operatorgroups_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
+      no_log: true
       when: operators_data is defined
 
     - name: Ensure operator lists are dicts with items
@@ -47,6 +50,7 @@
         subscriptions_list_items: "{{ (subscriptions_list.get('items', [])) if (subscriptions_list is mapping) else [] }}"
         installplans_list_items: "{{ (installplans_list.get('items', [])) if (installplans_list is mapping) else [] }}"
         operatorgroups_list_items: "{{ (operatorgroups_list.get('items', [])) if (operatorgroups_list is mapping) else [] }}"
+      no_log: true
 
     - name: Analyze operator health
       set_fact:
