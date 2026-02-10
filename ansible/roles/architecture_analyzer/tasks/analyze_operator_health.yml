@@ -1,10 +1,19 @@
 ---
+# Análise de operators feita NO REMOTO (script) e só o resumo vem ao controlador.
+# Evita slurp + from_json do operators.json inteiro no controlador (trava servidor).
 - name: Analyze operator health
   block:
-    - name: Load operators data from host
-      slurp:
-        src: "{{ data_output_path }}/operators.json"
-      register: operators_slurp
+    - name: Copy operator summary script to remote
+      copy:
+        src: summarize_operators.py
+        dest: "{{ data_output_path }}/summarize_operators.py"
+        mode: '0755'
+
+    - name: Run operator analysis on remote (summary stays on remote, small file only)
+      command: "python3 {{ data_output_path }}/summarize_operators.py {{ data_output_path }}/operators.json {{ data_output_path }}/operator_analysis_summary.json"
+      args:
+        chdir: "{{ data_output_path }}"
+      register: operator_summary_result
       no_log: true
       when:
         - data_collection_completed | bool
@@ -12,99 +21,36 @@
       ignore_errors: true
       failed_when: false
 
-    - name: Set operators_data from slurped content
-      set_fact:
-        operators_data: "{{ (operators_slurp.content | b64decode) | from_json }}"
-      no_log: true
+    - name: Load operator analysis summary from host (arquivo pequeno)
+      slurp:
+        src: "{{ data_output_path }}/operator_analysis_summary.json"
+      register: operator_summary_slurp
       when:
-        - operators_slurp is defined
-        - operators_slurp.content is defined
-        - (operators_slurp.content | length) > 0
+        - data_collection_completed | bool
+        - not ansible_check_mode | bool
+      ignore_errors: true
+      failed_when: false
 
-    - name: Set default operators data if not available
+    - name: Set operator analysis from summary (sem parse do JSON gigante no controlador)
       set_fact:
-        operators_data:
-          clusterserviceversions_json: '{"items": []}'
-          subscriptions_json: '{"items": []}'
-          installplans_json: '{"items": []}'
-          operatorgroups_json: '{"items": []}'
-      when: (operators_data is not defined) or (not data_collection_completed | bool) or (ansible_check_mode | bool) or (operators_slurp is not defined) or ((operators_slurp.content | default('')) | length == 0)
+        architecture_analysis: "{{ architecture_analysis | default({}) | combine({'operator_analysis': (operator_summary_slurp.content | b64decode | from_json)}}) }}"
+      when:
+        - operator_summary_slurp is defined
+        - operator_summary_slurp.content is defined
+        - (operator_summary_slurp.content | length) > 0
 
-    # Aceitar *_json já como dict (slurp+from_json) ou como string (from_json)
-    - name: Parse operators data
+    - name: Set default operator analysis when summary missing
       set_fact:
-        csv_list_raw: "{{ (operators_data.clusterserviceversions_json if (operators_data.clusterserviceversions_json is defined and operators_data.clusterserviceversions_json is mapping) else (operators_data.clusterserviceversions_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
-        subscriptions_list_raw: "{{ (operators_data.subscriptions_json if (operators_data.subscriptions_json is defined and operators_data.subscriptions_json is mapping) else (operators_data.subscriptions_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
-        installplans_list_raw: "{{ (operators_data.installplans_json if (operators_data.installplans_json is defined and operators_data.installplans_json is mapping) else (operators_data.installplans_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
-        operatorgroups_list_raw: "{{ (operators_data.operatorgroups_json if (operators_data.operatorgroups_json is defined and operators_data.operatorgroups_json is mapping) else (operators_data.operatorgroups_json | default('{\"items\": []}') | from_json)) | default({'items': []}) }}"
-      no_log: true
-      when: operators_data is defined
-
-    - name: Ensure operator lists are dicts with items
-      set_fact:
-        csv_list: "{{ csv_list_raw | default({'items': []}) }}"
-        subscriptions_list: "{{ subscriptions_list_raw | default({'items': []}) }}"
-        installplans_list: "{{ installplans_list_raw | default({'items': []}) }}"
-        operatorgroups_list: "{{ operatorgroups_list_raw | default({'items': []}) }}"
-        csv_list_items: "{{ (csv_list.get('items', [])) if (csv_list is mapping) else [] }}"
-        subscriptions_list_items: "{{ (subscriptions_list.get('items', [])) if (subscriptions_list is mapping) else [] }}"
-        installplans_list_items: "{{ (installplans_list.get('items', [])) if (installplans_list is mapping) else [] }}"
-        operatorgroups_list_items: "{{ (operatorgroups_list.get('items', [])) if (operatorgroups_list is mapping) else [] }}"
-      no_log: true
-
-    - name: Analyze operator health
-      set_fact:
-        operator_health_analysis:
-          total_csvs: "{{ csv_list_items | length }}"
-          total_subscriptions: "{{ subscriptions_list_items | length }}"
-          total_install_plans: "{{ installplans_list_items | length }}"
-          total_operator_groups: "{{ operatorgroups_list_items | length }}"
-          csvs_by_namespace: "{{ csv_list_items | groupby('metadata.namespace') | map('first') | list }}"
-          subscriptions_by_namespace: "{{ subscriptions_list_items | groupby('metadata.namespace') | map('first') | list }}"
-
-    - name: Analyze operator versions
-      set_fact:
-        operator_versions_analysis:
-          csv_versions: "{{ csv_list_items | map(attribute='spec.version') | unique | list }}"
-          subscription_versions: "{{ subscriptions_list_items | map(attribute='spec.channel') | unique | list }}"
-          operator_names: "{{ csv_list_items | map(attribute='spec.displayName') | unique | list }}"
-
-    - name: Initialize operator issues
-      set_fact:
-        operator_issues: []
-
-    - name: Check operator issues
-      block:
-        - name: Check for failed install plans
-          set_fact:
-            operator_issues: "{{ operator_issues + ['Some install plans may have failed'] }}"
-          when: installplans_list_items | selectattr('status.phase', 'equalto', 'Failed') | list | length > 0
-
-        - name: Check for subscription issues
-          set_fact:
-            operator_issues: "{{ operator_issues + ['Some subscriptions may have issues'] }}"
-          when: subscriptions_list_items | selectattr('status.conditions', 'defined') | selectattr('status.conditions', 'selectattr', 'status', 'equalto', 'False') | list | length > 0
-
-        - name: Check for CSV issues
-          set_fact:
-            operator_issues: "{{ operator_issues + ['Some cluster service versions may have issues'] }}"
-          when: csv_list_items | selectattr('status.phase', 'defined') | selectattr('status.phase', 'not', 'equalto', 'Succeeded') | list | length > 0
-
-    - name: Update architecture analysis with operator analysis
-      set_fact:
-        architecture_analysis:
-          operator_analysis:
-            operator_health: "{{ operator_health_analysis }}"
-            operator_versions: "{{ operator_versions_analysis }}"
-            operator_issues: "{{ operator_issues }}"
+        architecture_analysis: "{{ architecture_analysis | default({}) | combine({'operator_analysis': {'operator_health': {'total_csvs': 0, 'total_subscriptions': 0, 'total_install_plans': 0, 'total_operator_groups': 0}, 'operator_versions': {'csv_versions': [], 'subscription_versions': [], 'operator_names': []}, 'operator_issues': ['Operator analysis not run or summary missing']}}) }}"
+      when: (architecture_analysis | default({})).get('operator_analysis') is not defined
 
     - name: Set fact for operator analysis status
       set_fact:
-        analysis_status: "{{ analysis_status | default({}) | combine({'operator_analysis': true}) }}"
+        analysis_status: "{{ analysis_status | default({}) | combine({'operator_analysis': (operator_summary_slurp is defined and operator_summary_slurp.content is defined and (operator_summary_slurp.content | length) > 0)) }}"
 
     - name: Display operator analysis status
       debug:
-        msg: "Operator health analysis completed successfully"
+        msg: "Operator health analysis completed (summary from remote)"
 
   rescue:
     - name: Handle operator analysis failure
@@ -114,3 +60,8 @@
     - name: Set fact for operator analysis status
       set_fact:
         analysis_status: "{{ analysis_status | default({}) | combine({'operator_analysis': false}) }}"
+    
+    - name: Ensure operator_analysis key exists on failure
+      set_fact:
+        architecture_analysis: "{{ architecture_analysis | default({}) | combine({'operator_analysis': {'operator_health': {'total_csvs': 0, 'total_subscriptions': 0, 'total_install_plans': 0, 'total_operator_groups': 0}, 'operator_versions': {'csv_versions': [], 'subscription_versions': [], 'operator_names': []}, 'operator_issues': ['Analysis failed']}}) }}"
+      when: (architecture_analysis | default({})).get('operator_analysis') is not defined
